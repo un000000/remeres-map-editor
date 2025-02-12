@@ -190,9 +190,7 @@ void ZonesPalettePanel::OnEditZoneLabel(wxListEvent &event) {
 		}
 	}
 
-	if (event.IsAllowed()) {
-		g_gui.EnableHotkeys();
-	}
+	g_gui.EnableHotkeys();
 }
 
 void ZonesPalettePanel::OnClickAddZone(wxCommandEvent &event) {
@@ -224,4 +222,6 @@ void ZonesPalettePanel::OnClickRemoveZone(wxCommandEvent &event) {
 		zone_list->DeleteItem(item);
 		refresh_timer.Start(300, true);
 	}
+
+	g_gui.EnableHotkeys();
 }
