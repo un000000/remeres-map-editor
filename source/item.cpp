@@ -269,6 +269,10 @@ void Item::setActionID(unsigned short n) {
 	setAttribute("aid", n);
 }
 
+void Item::setKey(const std::string &str) {
+	setAttribute("keyValue123", str);
+}
+
 void Item::setText(const std::string &str) {
 	setAttribute("text", str);
 }
