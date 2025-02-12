@@ -1448,8 +1448,9 @@ void MapDrawer::WriteTooltip(const Item* item, std::ostringstream &stream) {
 
 	const uint16_t unique = item->getUniqueID();
 	const uint16_t action = item->getActionID();
+	const std::string &key = item->getKey();
 	const std::string &text = item->getText();
-	if (unique == 0 && action == 0 && text.empty()) {
+	if (unique == 0 && action == 0 && key.empty() && text.empty()) {
 		return;
 	}
 
@@ -1464,6 +1465,9 @@ void MapDrawer::WriteTooltip(const Item* item, std::ostringstream &stream) {
 	}
 	if (unique > 0) {
 		stream << "uid: " << unique << "\n";
+	}
+	if (!key.empty()) {
+		stream << "key: " << key << "\n";
 	}
 	if (!text.empty()) {
 		stream << "text: " << text << "\n";

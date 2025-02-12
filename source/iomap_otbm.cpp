@@ -76,6 +76,14 @@ Item* Item::Create_OTBM(const IOMap &maphandle, BinaryNode* stream) {
 
 bool Item::readItemAttribute_OTBM(const IOMap &maphandle, OTBM_ItemAttribute attr, BinaryNode* stream) {
 	switch (attr) {
+		case OTBM_ATTR_KEY: {
+			std::string key;
+			if (!stream->getString(key)) {
+				return false;
+			}
+			setKey(key);
+			break;
+		}
 		case OTBM_ATTR_COUNT: {
 			uint8_t subtype;
 			if (!stream->getU8(subtype)) {
@@ -184,6 +192,12 @@ void Item::serializeItemAttributes_OTBM(const IOMap &maphandle, NodeFileWriteHan
 		if (g_items.MinorVersion >= CLIENT_VERSION_820 && isCharged()) {
 			stream.addU8(OTBM_ATTR_CHARGES);
 			stream.addU16(getSubtype());
+		}
+
+		const std::string &key = getKey();
+		if (!key.empty()) {
+			stream.addU8(OTBM_ATTR_KEY);
+			stream.addString(key);
 		}
 
 		uint16_t actionId = getActionID();

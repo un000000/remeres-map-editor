@@ -66,6 +66,10 @@ OldPropertiesWindow::OldPropertiesWindow(wxWindow* win_parent, const Map* map, c
 		subsizer->Add(newd wxStaticText(this, wxID_ANY, "ID " + i2ws(item->getID())));
 		subsizer->Add(newd wxStaticText(this, wxID_ANY, "\"" + wxstr(item->getName()) + "\""));
 
+		subsizer->Add(newd wxStaticText(this, wxID_ANY, "Key"), wxSizerFlags(1).Center());
+		key_field = newd wxTextCtrl(this, wxID_ANY, wxstr(item->getKey()), wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE);
+		subsizer->Add(key_field, wxSizerFlags(7).Expand());
+
 		subsizer->Add(newd wxStaticText(this, wxID_ANY, "Action ID"));
 		action_id_field = newd wxSpinCtrl(this, wxID_ANY, i2ws(edit_item->getActionID()), wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 0xFFFF, edit_item->getActionID());
 		subsizer->Add(action_id_field, wxSizerFlags(1).Expand());
@@ -128,6 +132,10 @@ OldPropertiesWindow::OldPropertiesWindow(wxWindow* win_parent, const Map* map, c
 
 		subsizer->Add(newd wxStaticText(this, wxID_ANY, "ID " + i2ws(item->getID())));
 		subsizer->Add(newd wxStaticText(this, wxID_ANY, "\"" + wxstr(item->getName()) + "\""));
+
+		subsizer->Add(newd wxStaticText(this, wxID_ANY, "Key"), wxSizerFlags(1).Center());
+		key_field = newd wxTextCtrl(this, wxID_ANY, wxstr(item->getKey()), wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE);
+		subsizer->Add(key_field, wxSizerFlags(7).Expand());
 
 		subsizer->Add(newd wxStaticText(this, wxID_ANY, "Action ID"));
 		action_id_field = newd wxSpinCtrl(this, wxID_ANY, i2ws(edit_item->getActionID()), wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 0xFFFF, edit_item->getActionID());
@@ -192,6 +200,10 @@ OldPropertiesWindow::OldPropertiesWindow(wxWindow* win_parent, const Map* map, c
 		}
 
 		subsizer->Add(splash_type_field, wxSizerFlags(1).Expand());
+
+		subsizer->Add(newd wxStaticText(this, wxID_ANY, "Key"), wxSizerFlags(1).Center());
+		key_field = newd wxTextCtrl(this, wxID_ANY, wxstr(item->getKey()), wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE);
+		subsizer->Add(key_field, wxSizerFlags(7).Expand());
 
 		subsizer->Add(newd wxStaticText(this, wxID_ANY, "Action ID"));
 		action_id_field = newd wxSpinCtrl(this, wxID_ANY, i2ws(edit_item->getActionID()), wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 0xFFFF, edit_item->getActionID());
@@ -294,6 +306,10 @@ OldPropertiesWindow::OldPropertiesWindow(wxWindow* win_parent, const Map* map, c
 			count_field->Enable(false);
 		}
 		subsizer->Add(count_field, wxSizerFlags(1).Expand());
+
+		subsizer->Add(newd wxStaticText(this, wxID_ANY, "Key"), wxSizerFlags(1).Center());
+		key_field = newd wxTextCtrl(this, wxID_ANY, wxstr(item->getKey()), wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE);
+		subsizer->Add(key_field, wxSizerFlags(7).Expand());
 
 		subsizer->Add(newd wxStaticText(this, wxID_ANY, "Action ID"));
 		action_id_field = newd wxSpinCtrl(this, wxID_ANY, i2ws(edit_item->getActionID()), wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 0xFFFF, edit_item->getActionID());
@@ -606,6 +622,18 @@ void OldPropertiesWindow::OnClickOK(wxCommandEvent &WXUNUSED(event)) {
 					return;
 				}
 			}
+		}
+
+		if (edit_item && key_field) {
+			std::string key = nstr(key_field->GetValue());
+			if (key.length() >= 0x2000) {
+				g_gui.PopupDialog(this, "Error", "Key is longer than 65535 characters, this is not supported by OpenTibia. Reduce the length of the text.", wxOK);
+				return;
+			}
+			std::regex pattern("[ .%\\-]+");
+			std::string replacement = "-";
+			std::string result = std::regex_replace(key, pattern, replacement);
+			edit_item->setKey(result);
 		}
 
 		if (edit_item->canHoldText() || edit_item->canHoldDescription()) {
