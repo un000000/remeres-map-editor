@@ -24,7 +24,7 @@ Zones::~Zones() {
 	zones.clear();
 }
 
-bool Zones::addZone(std::string name, unsigned int id) {
+bool Zones::addZone(const std::string &name, unsigned int id) {
 	if (hasZone(name)) {
 		return false;
 	}
@@ -36,7 +36,7 @@ bool Zones::addZone(std::string name, unsigned int id) {
 	return true;
 }
 
-bool Zones::addZone(std::string name) {
+bool Zones::addZone(const std::string &name) {
 	return addZone(name, generateID());
 }
 
