@@ -196,10 +196,11 @@ public:
 	void OnDrawItem(wxDC &dc, const wxRect &rect, size_t index) const;
 	wxCoord OnMeasureItem(size_t index) const;
 
+	std::vector<Brush*> brushlist;
+
 protected:
 	bool cleared;
 	bool no_matches;
-	std::vector<Brush*> brushlist;
 };
 
 /**

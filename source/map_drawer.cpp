@@ -44,6 +44,7 @@
 #include "waypoint_brush.h"
 #include "zone_brush.h"
 #include "light_drawer.h"
+#include "zone_occupied_positions.cpp"
 
 DrawingOptions::DrawingOptions() {
 	SetDefault();
@@ -1481,6 +1482,13 @@ void MapDrawer::WriteTooltip(const Waypoint* waypoint, std::ostringstream &strea
 	stream << "wp: " << waypoint->name << "\n";
 }
 
+void MapDrawer::WriteTooltipZone(const std::string zoneName, unsigned int zoneId, std::ostringstream &stream) {
+	if (stream.tellp() > 0) {
+		stream << "\n";
+	}
+	stream << "zone: " << zoneName << ":" << zoneId << "\n";
+}
+
 void MapDrawer::DrawTile(TileLocation* location) {
 	if (!location) {
 		return;
@@ -1635,6 +1643,17 @@ void MapDrawer::DrawTile(TileLocation* location) {
 
 	if (!hidden && options.show_npcs && tile->npc) {
 		BlitCreature(draw_x, draw_y, tile->npc);
+	}
+	const auto &pos = tile->getPosition();
+
+	auto &zones = canvas->editor.getMap().zones;
+	for (auto zone : tile->zones) {
+		if (ZoneOccupiedPositions::hasCenter(zone)) {
+			if (ZoneOccupiedPositions::getCenter(zone) == tile->getPosition()) {
+				auto name = zones.getZoneName(zone);
+				WriteTooltipZone(name, zone, tooltip);
+			}
+		}
 	}
 
 	if (show_tooltips) {

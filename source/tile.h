@@ -24,6 +24,7 @@
 #include "spawn_npc.h"
 #include "npc.h"
 #include <unordered_set>
+#include "zone_occupied_positions.cpp"
 
 enum {
 	TILESTATE_NONE = 0x0000,
@@ -281,13 +282,21 @@ public: // Functions
 			return;
 		}
 		zones.insert(zone);
+		auto &pos = getPosition();
+		ZoneOccupiedPositions::addPosition(zone, pos);
 	}
 
 	void removeZone(unsigned int zone) {
 		zones.erase(zone);
+		auto &pos = getPosition();
+		ZoneOccupiedPositions::removePosition(zone, pos);
 	}
 
 	void removeZones() {
+		auto &pos = getPosition();
+		for (auto zone : zones) {
+			ZoneOccupiedPositions::removePosition(zone, pos);
+		}
 		zones.clear();
 	}
 

@@ -174,6 +174,7 @@ protected:
 	void DrawLight() const;
 	void WriteTooltip(const Item* item, std::ostringstream &stream);
 	void WriteTooltip(const Waypoint* item, std::ostringstream &stream);
+	void WriteTooltipZone(const std::string zoneName, unsigned int zoneId, std::ostringstream &stream);
 	void MakeTooltip(int screenx, int screeny, const std::string &text, uint8_t r = 255, uint8_t g = 255, uint8_t b = 255);
 	void AddLight(TileLocation* location);
 

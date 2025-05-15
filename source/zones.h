@@ -33,6 +33,13 @@ public:
 		}
 		return it->second;
 	}
+	std::string getZoneName(unsigned int id) const {
+		for (const auto &pair : zones) {
+			if (pair.second == id) {
+				return pair.first;
+			}
+		}
+	}
 	bool addZone(std::string name);
 	bool addZone(std::string name, unsigned int id);
 	bool hasZone(std::string name);

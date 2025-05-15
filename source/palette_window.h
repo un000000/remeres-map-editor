@@ -79,6 +79,7 @@ protected:
 	static PalettePanel* CreateRAWPalette(wxWindow* parent, const TilesetContainer &tilesets);
 
 	static bool CanSelectHouseBrush(PalettePanel* palette, const Brush* whatBrush);
+	static bool CanSelectZonesBrush(PalettePanel* palette, const Brush* whatBrush);
 	static bool CanSelectBrush(PalettePanel* palette, const Brush* whatBrush);
 
 	wxChoicebook* choicebook = newd wxChoicebook(this, PALETTE_CHOICEBOOK, wxDefaultPosition, wxSize(230, 250));
