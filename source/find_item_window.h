@@ -23,7 +23,6 @@
 #include <wx/sizer.h>
 #include <wx/statbox.h>
 #include <wx/textctrl.h>
-#include <wx/checkbox.h>
 #include <wx/button.h>
 #include <wx/dialog.h>
 
@@ -32,8 +31,7 @@ class FindDialogListBox;
 class FindItemDialog : public wxDialog {
 public:
 	enum SearchMode {
-		ServerIDs = 0,
-		ClientIDs,
+		ItemIDs = 0,
 		Names,
 		Types,
 		TileTypes,
@@ -76,10 +74,10 @@ public:
 private:
 	void EnableProperties(bool enable);
 	void RefreshContentsInternal();
+	void CreatePropertyRadioBoxes(wxStaticBoxSizer* propertiesBoxSizer);
 
 	void OnOptionChange(wxCommandEvent &event);
-	void OnServerIdChange(wxCommandEvent &event);
-	void OnClientIdChange(wxCommandEvent &event);
+	void OnItemIdChange(wxCommandEvent &event);
 	void OnText(wxCommandEvent &event);
 	void OnTypeChange(wxCommandEvent &event);
 	void OnPropertyChange(wxCommandEvent &event);
@@ -88,29 +86,28 @@ private:
 	void OnClickCancel(wxCommandEvent &event);
 
 	wxRadioBox* optionsRadioBox;
-
 	wxRadioBox* typesRadioBox;
 	wxRadioBox* tileTypesRadioBox;
-
-	wxSpinCtrl* serverIdSpin;
-	wxSpinCtrl* clientIdSpin;
+	wxSpinCtrl* itemIdSpin;
 	wxTextCtrl* nameTextInput;
 	wxTimer inputTimer;
-	wxCheckBox* unpassable;
-	wxCheckBox* unmovable;
-	wxCheckBox* blockMissiles;
-	wxCheckBox* blockPathfinder;
-	wxCheckBox* readable;
-	wxCheckBox* writeable;
-	wxCheckBox* pickupable;
-	wxCheckBox* stackable;
-	wxCheckBox* rotatable;
-	wxCheckBox* hangable;
-	wxCheckBox* hookEast;
-	wxCheckBox* hookSouth;
-	wxCheckBox* hasElevation;
-	wxCheckBox* ignoreLook;
-	wxCheckBox* floorChange;
+	wxRadioBox* unpassableRadio;
+	wxRadioBox* movableRadio;
+	wxRadioBox* blockMissilesRadio;
+	wxRadioBox* blockPathfinderRadio;
+	wxRadioBox* readableRadio;
+	wxRadioBox* writeableRadio;
+	wxRadioBox* pickupableRadio;
+	wxRadioBox* stackableRadio;
+	wxRadioBox* rotatableRadio;
+	wxRadioBox* hangableRadio;
+	wxRadioBox* hookEastRadio;
+	wxRadioBox* hookSouthRadio;
+	wxRadioBox* hasElevationRadio;
+	wxRadioBox* ignoreLookRadio;
+	wxRadioBox* floorChangeRadio;
+	wxRadioBox* alwaysOnBottomRadio;
+	wxRadioBox* isGroundRadio;
 
 	FindDialogListBox* itemsList;
 	wxStdDialogButtonSizer* buttonsBoxSizer;

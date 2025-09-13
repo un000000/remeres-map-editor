@@ -228,6 +228,7 @@
     <ClCompile Include="..\..\source\brush_tables.cpp" />
     <ClCompile Include="..\..\source\container_properties_window.cpp" />
     <ClCompile Include="..\..\source\find_item_window.cpp" />
+    <ClCompile Include="..\..\source\item_filter.cpp" />
     <ClCompile Include="..\..\source\light_drawer.cpp" />
     <ClCompile Include="..\..\source\iominimap.cpp" />
     <ClCompile Include="..\..\source\palette_zones.cpp" />
@@ -241,6 +242,7 @@
     <ClInclude Include="..\..\source\add_tileset_window.h" />
     <ClInclude Include="..\..\source\artprovider.h" />
     <ClInclude Include="..\..\source\const.h" />
+    <ClInclude Include="..\..\source\item_filter.h" />
     <ClInclude Include="..\..\source\light_drawer.h" />
     <ClInclude Include="..\..\source\main_toolbar.h" />
     <ClInclude Include="..\..\source\otml.h" />

@@ -22,6 +22,7 @@
 #include "items.h"
 #include "brush.h"
 #include "raw_brush.h"
+#include "item_filter.h"
 
 BEGIN_EVENT_TABLE(FindItemDialog, wxDialog)
 EVT_TIMER(wxID_ANY, FindItemDialog::OnInputTimer)
@@ -29,8 +30,47 @@ EVT_BUTTON(wxID_OK, FindItemDialog::OnClickOK)
 EVT_BUTTON(wxID_CANCEL, FindItemDialog::OnClickCancel)
 END_EVENT_TABLE()
 
+void FindItemDialog::CreatePropertyRadioBoxes(wxStaticBoxSizer* propertiesBoxSizer) {
+	wxArrayString choices;
+	choices.Add("Any");
+	choices.Add("Yes");
+	choices.Add("No");
+
+	auto createPropertyRow = [&](const wxString &label, wxRadioBox*&radioBox, int defaultSelection = 0, bool enabled = true) {
+		wxBoxSizer* rowSizer = new wxBoxSizer(wxHORIZONTAL);
+
+		wxStaticText* propLabel = new wxStaticText(propertiesBoxSizer->GetStaticBox(), wxID_ANY, label);
+		rowSizer->Add(propLabel, 1, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, 5);
+
+		radioBox = new wxRadioBox(propertiesBoxSizer->GetStaticBox(), wxID_ANY, "", wxDefaultPosition, wxDefaultSize, choices, 3, wxRA_HORIZONTAL);
+		radioBox->SetSelection(defaultSelection);
+		radioBox->Enable(enabled);
+		rowSizer->Add(radioBox, 0, wxRIGHT, 2);
+
+		propertiesBoxSizer->Add(rowSizer, 0, wxEXPAND | wxTOP, 1);
+	};
+
+	createPropertyRow("Unpassable", unpassableRadio);
+	createPropertyRow("Movable", movableRadio);
+	createPropertyRow("Block Missiles", blockMissilesRadio);
+	createPropertyRow("Block Pathfinder", blockPathfinderRadio);
+	createPropertyRow("Readable", readableRadio);
+	createPropertyRow("Writeable", writeableRadio);
+	createPropertyRow("Pickupable", pickupableRadio, onlyPickupables ? 1 : 0, !onlyPickupables);
+	createPropertyRow("Stackable", stackableRadio);
+	createPropertyRow("Rotatable", rotatableRadio);
+	createPropertyRow("Hangable", hangableRadio);
+	createPropertyRow("Hook East", hookEastRadio);
+	createPropertyRow("Hook South", hookSouthRadio);
+	createPropertyRow("Has Elevation", hasElevationRadio);
+	createPropertyRow("Ignore Look", ignoreLookRadio);
+	createPropertyRow("Floor Change", floorChangeRadio);
+	createPropertyRow("Always on bottom", alwaysOnBottomRadio);
+	createPropertyRow("Is ground", isGroundRadio);
+}
+
 FindItemDialog::FindItemDialog(wxWindow* parent, const wxString &title, bool onlyPickupables /* = false*/, bool onSelection /* = false*/) :
-	wxDialog(parent, wxID_ANY, title, wxDefaultPosition, wxSize(800, 600), wxDEFAULT_DIALOG_STYLE),
+	wxDialog(parent, wxID_ANY, title, wxDefaultPosition, wxSize(800, 900), wxDEFAULT_DIALOG_STYLE),
 	inputTimer(this),
 	onlyPickupables(onlyPickupables),
 	onSelection(onSelection) {
@@ -40,8 +80,7 @@ FindItemDialog::FindItemDialog(wxWindow* parent, const wxString &title, bool onl
 
 	wxBoxSizer* optionsBoxSizer = newd wxBoxSizer(wxVERTICAL);
 
-	wxString radioBoxChoices[] = { "Find by Server ID",
-								   "Find by Client ID",
+	wxString radioBoxChoices[] = { "Find by Item ID",
 								   "Find by Name",
 								   "Find by Types",
 								   "Find by Tile Types",
@@ -49,19 +88,13 @@ FindItemDialog::FindItemDialog(wxWindow* parent, const wxString &title, bool onl
 
 	int radioBoxChoicesSize = sizeof(radioBoxChoices) / sizeof(wxString);
 	optionsRadioBox = newd wxRadioBox(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, radioBoxChoicesSize, radioBoxChoices, 1, wxRA_SPECIFY_COLS);
-	optionsRadioBox->SetSelection(SearchMode::ServerIDs);
+	optionsRadioBox->SetSelection(SearchMode::ItemIDs);
 	optionsBoxSizer->Add(optionsRadioBox, 0, wxALL | wxEXPAND, 5);
 
-	wxStaticBoxSizer* serverIdBoxSizer = newd wxStaticBoxSizer(newd wxStaticBox(this, wxID_ANY, "Server ID"), wxVERTICAL);
-	serverIdSpin = newd wxSpinCtrl(serverIdBoxSizer->GetStaticBox(), wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, g_items.getMinID(), g_items.getMaxID(), g_items.getMinID());
-	serverIdBoxSizer->Add(serverIdSpin, 0, wxALL | wxEXPAND, 5);
-	optionsBoxSizer->Add(serverIdBoxSizer, 1, wxALL | wxEXPAND, 5);
-
-	wxStaticBoxSizer* clientIdBoxSizer = newd wxStaticBoxSizer(newd wxStaticBox(this, wxID_ANY, "Client ID"), wxVERTICAL);
-	clientIdSpin = newd wxSpinCtrl(clientIdBoxSizer->GetStaticBox(), wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, g_gui.gfx.getItemSpriteMinID(), g_gui.gfx.getItemSpriteMaxID(), g_gui.gfx.getItemSpriteMinID());
-	clientIdSpin->Enable(false);
-	clientIdBoxSizer->Add(clientIdSpin, 0, wxALL | wxEXPAND, 5);
-	optionsBoxSizer->Add(clientIdBoxSizer, 1, wxALL | wxEXPAND, 5);
+	wxStaticBoxSizer* itemIdBoxSizer = newd wxStaticBoxSizer(newd wxStaticBox(this, wxID_ANY, "Item ID"), wxVERTICAL);
+	itemIdSpin = newd wxSpinCtrl(itemIdBoxSizer->GetStaticBox(), wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 100, g_items.getMaxID(), 100);
+	itemIdBoxSizer->Add(itemIdSpin, 0, wxALL | wxEXPAND, 5);
+	optionsBoxSizer->Add(itemIdBoxSizer, 1, wxALL | wxEXPAND, 5);
 
 	wxStaticBoxSizer* nameBoxSizer = newd wxStaticBoxSizer(newd wxStaticBox(this, wxID_ANY, "Name"), wxVERTICAL);
 	nameTextInput = newd wxTextCtrl(nameBoxSizer->GetStaticBox(), wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0);
@@ -120,54 +153,7 @@ FindItemDialog::FindItemDialog(wxWindow* parent, const wxString &title, bool onl
 	// --------------- Properties ---------------
 
 	wxStaticBoxSizer* propertiesBoxSizer = newd wxStaticBoxSizer(newd wxStaticBox(this, wxID_ANY, "Properties"), wxVERTICAL);
-
-	unpassable = newd wxCheckBox(propertiesBoxSizer->GetStaticBox(), wxID_ANY, "Unpassable", wxDefaultPosition, wxDefaultSize, 0);
-	propertiesBoxSizer->Add(unpassable, 0, wxALL, 5);
-
-	unmovable = newd wxCheckBox(propertiesBoxSizer->GetStaticBox(), wxID_ANY, "Unmovable", wxDefaultPosition, wxDefaultSize, 0);
-	propertiesBoxSizer->Add(unmovable, 0, wxALL, 5);
-
-	blockMissiles = newd wxCheckBox(propertiesBoxSizer->GetStaticBox(), wxID_ANY, "Block Missiles", wxDefaultPosition, wxDefaultSize, 0);
-	propertiesBoxSizer->Add(blockMissiles, 0, wxALL, 5);
-
-	blockPathfinder = newd wxCheckBox(propertiesBoxSizer->GetStaticBox(), wxID_ANY, "Block Pathfinder", wxDefaultPosition, wxDefaultSize, 0);
-	propertiesBoxSizer->Add(blockPathfinder, 0, wxALL, 5);
-
-	readable = newd wxCheckBox(propertiesBoxSizer->GetStaticBox(), wxID_ANY, "Readable", wxDefaultPosition, wxDefaultSize, 0);
-	propertiesBoxSizer->Add(readable, 0, wxALL, 5);
-
-	writeable = newd wxCheckBox(propertiesBoxSizer->GetStaticBox(), wxID_ANY, "Writeable", wxDefaultPosition, wxDefaultSize, 0);
-	propertiesBoxSizer->Add(writeable, 0, wxALL, 5);
-
-	pickupable = newd wxCheckBox(propertiesBoxSizer->GetStaticBox(), wxID_ANY, "Pickupable", wxDefaultPosition, wxDefaultSize, 0);
-	pickupable->SetValue(onlyPickupables);
-	pickupable->Enable(!onlyPickupables);
-	propertiesBoxSizer->Add(pickupable, 0, wxALL, 5);
-
-	stackable = newd wxCheckBox(propertiesBoxSizer->GetStaticBox(), wxID_ANY, "Stackable", wxDefaultPosition, wxDefaultSize, 0);
-	propertiesBoxSizer->Add(stackable, 0, wxALL, 5);
-
-	rotatable = newd wxCheckBox(propertiesBoxSizer->GetStaticBox(), wxID_ANY, "Rotatable", wxDefaultPosition, wxDefaultSize, 0);
-	propertiesBoxSizer->Add(rotatable, 0, wxALL, 5);
-
-	hangable = newd wxCheckBox(propertiesBoxSizer->GetStaticBox(), wxID_ANY, "Hangable", wxDefaultPosition, wxDefaultSize, 0);
-	propertiesBoxSizer->Add(hangable, 0, wxALL, 5);
-
-	hookEast = newd wxCheckBox(propertiesBoxSizer->GetStaticBox(), wxID_ANY, "Hook East", wxDefaultPosition, wxDefaultSize, 0);
-	propertiesBoxSizer->Add(hookEast, 0, wxALL, 5);
-
-	hookSouth = newd wxCheckBox(propertiesBoxSizer->GetStaticBox(), wxID_ANY, "Hook South", wxDefaultPosition, wxDefaultSize, 0);
-	propertiesBoxSizer->Add(hookSouth, 0, wxALL, 5);
-
-	hasElevation = newd wxCheckBox(propertiesBoxSizer->GetStaticBox(), wxID_ANY, "Has Elevation", wxDefaultPosition, wxDefaultSize, 0);
-	propertiesBoxSizer->Add(hasElevation, 0, wxALL, 5);
-
-	ignoreLook = newd wxCheckBox(propertiesBoxSizer->GetStaticBox(), wxID_ANY, "Ignore Look", wxDefaultPosition, wxDefaultSize, 0);
-	propertiesBoxSizer->Add(ignoreLook, 0, wxALL, 5);
-
-	floorChange = newd wxCheckBox(propertiesBoxSizer->GetStaticBox(), wxID_ANY, "Floor Change", wxDefaultPosition, wxDefaultSize, 0);
-	propertiesBoxSizer->Add(floorChange, 0, wxALL, 5);
-
+	CreatePropertyRadioBoxes(propertiesBoxSizer);
 	boxSizer->Add(propertiesBoxSizer, 1, wxALL | wxEXPAND, 5);
 
 	// --------------- Items list ---------------
@@ -186,59 +172,59 @@ FindItemDialog::FindItemDialog(wxWindow* parent, const wxString &title, bool onl
 
 	// Connect Events
 	optionsRadioBox->Connect(wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(FindItemDialog::OnOptionChange), nullptr, this);
-	serverIdSpin->Connect(wxEVT_COMMAND_SPINCTRL_UPDATED, wxCommandEventHandler(FindItemDialog::OnServerIdChange), nullptr, this);
-	serverIdSpin->Connect(wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler(FindItemDialog::OnServerIdChange), nullptr, this);
-	clientIdSpin->Connect(wxEVT_COMMAND_SPINCTRL_UPDATED, wxCommandEventHandler(FindItemDialog::OnClientIdChange), nullptr, this);
-	clientIdSpin->Connect(wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler(FindItemDialog::OnClientIdChange), nullptr, this);
+	itemIdSpin->Connect(wxEVT_COMMAND_SPINCTRL_UPDATED, wxCommandEventHandler(FindItemDialog::OnItemIdChange), nullptr, this);
+	itemIdSpin->Connect(wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler(FindItemDialog::OnItemIdChange), nullptr, this);
 	nameTextInput->Connect(wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler(FindItemDialog::OnText), nullptr, this);
 
 	typesRadioBox->Connect(wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(FindItemDialog::OnTypeChange), nullptr, this);
 	tileTypesRadioBox->Connect(wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(FindItemDialog::OnTypeChange), nullptr, this);
 
-	unpassable->Connect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(FindItemDialog::OnPropertyChange), nullptr, this);
-	unmovable->Connect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(FindItemDialog::OnPropertyChange), nullptr, this);
-	blockMissiles->Connect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(FindItemDialog::OnPropertyChange), nullptr, this);
-	blockPathfinder->Connect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(FindItemDialog::OnPropertyChange), nullptr, this);
-	readable->Connect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(FindItemDialog::OnPropertyChange), nullptr, this);
-	writeable->Connect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(FindItemDialog::OnPropertyChange), nullptr, this);
-	pickupable->Connect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(FindItemDialog::OnPropertyChange), nullptr, this);
-	stackable->Connect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(FindItemDialog::OnPropertyChange), nullptr, this);
-	rotatable->Connect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(FindItemDialog::OnPropertyChange), nullptr, this);
-	hangable->Connect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(FindItemDialog::OnPropertyChange), nullptr, this);
-	hookEast->Connect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(FindItemDialog::OnPropertyChange), nullptr, this);
-	hookSouth->Connect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(FindItemDialog::OnPropertyChange), nullptr, this);
-	hasElevation->Connect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(FindItemDialog::OnPropertyChange), nullptr, this);
-	ignoreLook->Connect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(FindItemDialog::OnPropertyChange), nullptr, this);
-	floorChange->Connect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(FindItemDialog::OnPropertyChange), nullptr, this);
+	unpassableRadio->Connect(wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(FindItemDialog::OnPropertyChange), nullptr, this);
+	movableRadio->Connect(wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(FindItemDialog::OnPropertyChange), nullptr, this);
+	blockMissilesRadio->Connect(wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(FindItemDialog::OnPropertyChange), nullptr, this);
+	blockPathfinderRadio->Connect(wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(FindItemDialog::OnPropertyChange), nullptr, this);
+	readableRadio->Connect(wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(FindItemDialog::OnPropertyChange), nullptr, this);
+	writeableRadio->Connect(wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(FindItemDialog::OnPropertyChange), nullptr, this);
+	pickupableRadio->Connect(wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(FindItemDialog::OnPropertyChange), nullptr, this);
+	stackableRadio->Connect(wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(FindItemDialog::OnPropertyChange), nullptr, this);
+	rotatableRadio->Connect(wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(FindItemDialog::OnPropertyChange), nullptr, this);
+	hangableRadio->Connect(wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(FindItemDialog::OnPropertyChange), nullptr, this);
+	hookEastRadio->Connect(wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(FindItemDialog::OnPropertyChange), nullptr, this);
+	hookSouthRadio->Connect(wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(FindItemDialog::OnPropertyChange), nullptr, this);
+	hasElevationRadio->Connect(wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(FindItemDialog::OnPropertyChange), nullptr, this);
+	ignoreLookRadio->Connect(wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(FindItemDialog::OnPropertyChange), nullptr, this);
+	floorChangeRadio->Connect(wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(FindItemDialog::OnPropertyChange), nullptr, this);
+	alwaysOnBottomRadio->Connect(wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(FindItemDialog::OnPropertyChange), nullptr, this);
+	isGroundRadio->Connect(wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(FindItemDialog::OnPropertyChange), nullptr, this);
 }
 
 FindItemDialog::~FindItemDialog() {
 	// Disconnect Events
-	optionsRadioBox->Disconnect(wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(FindItemDialog::OnOptionChange), nullptr, this);
-	serverIdSpin->Disconnect(wxEVT_COMMAND_SPINCTRL_UPDATED, wxCommandEventHandler(FindItemDialog::OnServerIdChange), nullptr, this);
-	serverIdSpin->Disconnect(wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler(FindItemDialog::OnServerIdChange), nullptr, this);
-	clientIdSpin->Disconnect(wxEVT_COMMAND_SPINCTRL_UPDATED, wxCommandEventHandler(FindItemDialog::OnClientIdChange), nullptr, this);
-	clientIdSpin->Disconnect(wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler(FindItemDialog::OnClientIdChange), nullptr, this);
-	nameTextInput->Disconnect(wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler(FindItemDialog::OnText), nullptr, this);
+	optionsRadioBox->Disconnect(wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(FindItemDialog::OnOptionChange), NULL, this);
+	itemIdSpin->Disconnect(wxEVT_COMMAND_SPINCTRL_UPDATED, wxCommandEventHandler(FindItemDialog::OnItemIdChange), NULL, this);
+	itemIdSpin->Disconnect(wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler(FindItemDialog::OnItemIdChange), NULL, this);
+	nameTextInput->Disconnect(wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler(FindItemDialog::OnText), NULL, this);
 
 	typesRadioBox->Disconnect(wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(FindItemDialog::OnTypeChange), nullptr, this);
 	tileTypesRadioBox->Disconnect(wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(FindItemDialog::OnTypeChange), nullptr, this);
 
-	unpassable->Disconnect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(FindItemDialog::OnPropertyChange), nullptr, this);
-	unmovable->Disconnect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(FindItemDialog::OnPropertyChange), nullptr, this);
-	blockMissiles->Disconnect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(FindItemDialog::OnPropertyChange), nullptr, this);
-	blockPathfinder->Disconnect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(FindItemDialog::OnPropertyChange), nullptr, this);
-	readable->Disconnect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(FindItemDialog::OnPropertyChange), nullptr, this);
-	writeable->Disconnect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(FindItemDialog::OnPropertyChange), nullptr, this);
-	pickupable->Disconnect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(FindItemDialog::OnPropertyChange), nullptr, this);
-	stackable->Disconnect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(FindItemDialog::OnPropertyChange), nullptr, this);
-	rotatable->Disconnect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(FindItemDialog::OnPropertyChange), nullptr, this);
-	hangable->Disconnect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(FindItemDialog::OnPropertyChange), nullptr, this);
-	hookEast->Disconnect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(FindItemDialog::OnPropertyChange), nullptr, this);
-	hookSouth->Disconnect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(FindItemDialog::OnPropertyChange), nullptr, this);
-	hasElevation->Disconnect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(FindItemDialog::OnPropertyChange), nullptr, this);
-	ignoreLook->Disconnect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(FindItemDialog::OnPropertyChange), nullptr, this);
-	floorChange->Disconnect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(FindItemDialog::OnPropertyChange), nullptr, this);
+	unpassableRadio->Disconnect(wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(FindItemDialog::OnPropertyChange), nullptr, this);
+	movableRadio->Disconnect(wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(FindItemDialog::OnPropertyChange), nullptr, this);
+	blockMissilesRadio->Disconnect(wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(FindItemDialog::OnPropertyChange), nullptr, this);
+	blockPathfinderRadio->Disconnect(wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(FindItemDialog::OnPropertyChange), nullptr, this);
+	readableRadio->Disconnect(wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(FindItemDialog::OnPropertyChange), nullptr, this);
+	writeableRadio->Disconnect(wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(FindItemDialog::OnPropertyChange), nullptr, this);
+	pickupableRadio->Disconnect(wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(FindItemDialog::OnPropertyChange), nullptr, this);
+	stackableRadio->Disconnect(wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(FindItemDialog::OnPropertyChange), nullptr, this);
+	rotatableRadio->Disconnect(wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(FindItemDialog::OnPropertyChange), nullptr, this);
+	hangableRadio->Disconnect(wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(FindItemDialog::OnPropertyChange), nullptr, this);
+	hookEastRadio->Disconnect(wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(FindItemDialog::OnPropertyChange), nullptr, this);
+	hookSouthRadio->Disconnect(wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(FindItemDialog::OnPropertyChange), nullptr, this);
+	hasElevationRadio->Disconnect(wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(FindItemDialog::OnPropertyChange), nullptr, this);
+	ignoreLookRadio->Disconnect(wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(FindItemDialog::OnPropertyChange), nullptr, this);
+	floorChangeRadio->Disconnect(wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(FindItemDialog::OnPropertyChange), nullptr, this);
+	alwaysOnBottomRadio->Disconnect(wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(FindItemDialog::OnPropertyChange), nullptr, this);
+	isGroundRadio->Disconnect(wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(FindItemDialog::OnPropertyChange), nullptr, this);
 }
 
 FindItemDialog::SearchMode FindItemDialog::getSearchMode() const {
@@ -254,41 +240,39 @@ void FindItemDialog::setSearchMode(SearchMode mode) {
 		optionsRadioBox->SetSelection(mode);
 	}
 
-	serverIdSpin->Enable(mode == SearchMode::ServerIDs);
-	clientIdSpin->Enable(mode == SearchMode::ClientIDs);
+	itemIdSpin->Enable(mode == SearchMode::ItemIDs);
 	nameTextInput->Enable(mode == SearchMode::Names);
 	typesRadioBox->Enable(mode == SearchMode::Types);
 	tileTypesRadioBox->Enable(mode == SearchMode::TileTypes);
 	EnableProperties(mode == SearchMode::Properties);
 	RefreshContentsInternal();
 
-	if (mode == SearchMode::ServerIDs) {
-		serverIdSpin->SetFocus();
-		serverIdSpin->SetSelection(-1, -1);
-	} else if (mode == SearchMode::ClientIDs) {
-		clientIdSpin->SetFocus();
-		clientIdSpin->SetSelection(-1, -1);
+	if (mode == SearchMode::ItemIDs) {
+		itemIdSpin->SetFocus();
+		itemIdSpin->SetSelection(-1, -1);
 	} else if (mode == SearchMode::Names) {
 		nameTextInput->SetFocus();
 	}
 }
 
 void FindItemDialog::EnableProperties(bool enable) {
-	unpassable->Enable(enable);
-	unmovable->Enable(enable);
-	blockMissiles->Enable(enable);
-	blockPathfinder->Enable(enable);
-	readable->Enable(enable);
-	writeable->Enable(enable);
-	pickupable->Enable(!onlyPickupables && enable);
-	stackable->Enable(enable);
-	rotatable->Enable(enable);
-	hangable->Enable(enable);
-	hookEast->Enable(enable);
-	hookSouth->Enable(enable);
-	hasElevation->Enable(enable);
-	ignoreLook->Enable(enable);
-	floorChange->Enable(enable);
+	unpassableRadio->Enable(enable);
+	movableRadio->Enable(enable);
+	blockMissilesRadio->Enable(enable);
+	blockPathfinderRadio->Enable(enable);
+	readableRadio->Enable(enable);
+	writeableRadio->Enable(enable);
+	pickupableRadio->Enable(!onlyPickupables && enable);
+	stackableRadio->Enable(enable);
+	rotatableRadio->Enable(enable);
+	hangableRadio->Enable(enable);
+	hookEastRadio->Enable(enable);
+	hookSouthRadio->Enable(enable);
+	hasElevationRadio->Enable(enable);
+	ignoreLookRadio->Enable(enable);
+	floorChangeRadio->Enable(enable);
+	alwaysOnBottomRadio->Enable(enable);
+	isGroundRadio->Enable(enable);
 }
 
 void FindItemDialog::RefreshContentsInternal() {
@@ -298,31 +282,11 @@ void FindItemDialog::RefreshContentsInternal() {
 	SearchMode selection = (SearchMode)optionsRadioBox->GetSelection();
 	bool foundSearchResults = false;
 
-	if (selection == SearchMode::ServerIDs) {
-		uint16_t serverID = (uint16_t)serverIdSpin->GetValue();
+	if (selection == SearchMode::ItemIDs) {
+		uint16_t itemID = (uint16_t)itemIdSpin->GetValue();
 		for (int id = g_items.getMinID(); id <= g_items.getMaxID(); ++id) {
 			const ItemType &item = g_items.getItemType(id);
-			if (item.id != serverID) {
-				continue;
-			}
-
-			RAWBrush* rawBrush = item.raw_brush;
-			if (!rawBrush) {
-				continue;
-			}
-
-			if (onlyPickupables && !item.pickupable) {
-				continue;
-			}
-
-			foundSearchResults = true;
-			itemsList->AddBrush(rawBrush);
-		}
-	} else if (selection == SearchMode::ClientIDs) {
-		uint16_t clientID = static_cast<uint16_t>(clientIdSpin->GetValue());
-		for (int id = g_items.getMinID(); id <= g_items.getMaxID(); ++id) {
-			const ItemType &item = g_items.getItemType(id);
-			if (item.id == 0 || item.clientID != clientID) {
+			if (item.id == 0 || item.id != itemID) {
 				continue;
 			}
 
@@ -389,26 +353,32 @@ void FindItemDialog::RefreshContentsInternal() {
 			itemsList->AddBrush(rawBrush);
 		}
 	} else if (selection == SearchMode::Properties) {
-		bool hasSelected = (unpassable->GetValue() || unmovable->GetValue() || blockMissiles->GetValue() || blockPathfinder->GetValue() || readable->GetValue() || writeable->GetValue() || pickupable->GetValue() || stackable->GetValue() || rotatable->GetValue() || hangable->GetValue() || hookEast->GetValue() || hookSouth->GetValue() || hasElevation->GetValue() || ignoreLook->GetValue() || floorChange->GetValue());
+		ItemFilter filter;
+		filter.onlyPickupables = onlyPickupables;
 
-		if (hasSelected) {
-			for (int id = g_items.getMinID(); id <= g_items.getMaxID(); ++id) {
-				const ItemType &item = g_items.getItemType(id);
-				if (item.id == 0) {
-					continue;
-				}
+		filter.unpassable = (FilterChoice)unpassableRadio->GetSelection();
+		filter.moveable = (FilterChoice)movableRadio->GetSelection();
+		filter.blockMissiles = (FilterChoice)blockMissilesRadio->GetSelection();
+		filter.blockPathfinder = (FilterChoice)blockPathfinderRadio->GetSelection();
+		filter.readable = (FilterChoice)readableRadio->GetSelection();
+		filter.writeable = (FilterChoice)writeableRadio->GetSelection();
+		filter.pickupable = (FilterChoice)pickupableRadio->GetSelection();
+		filter.stackable = (FilterChoice)stackableRadio->GetSelection();
+		filter.rotatable = (FilterChoice)rotatableRadio->GetSelection();
+		filter.hangable = (FilterChoice)hangableRadio->GetSelection();
+		filter.hookEast = (FilterChoice)hookEastRadio->GetSelection();
+		filter.hookSouth = (FilterChoice)hookSouthRadio->GetSelection();
+		filter.hasElevation = (FilterChoice)hasElevationRadio->GetSelection();
+		filter.ignoreLook = (FilterChoice)ignoreLookRadio->GetSelection();
+		filter.floorChange = (FilterChoice)floorChangeRadio->GetSelection();
+		filter.alwaysOnBottom = (FilterChoice)alwaysOnBottomRadio->GetSelection();
+		filter.isGround = (FilterChoice)isGroundRadio->GetSelection();
 
-				RAWBrush* rawBrush = item.raw_brush;
-				if (!rawBrush) {
-					continue;
-				}
-
-				if ((unpassable->GetValue() && !item.unpassable) || (unmovable->GetValue() && item.moveable) || (blockMissiles->GetValue() && !item.blockMissiles) || (blockPathfinder->GetValue() && !item.blockPathfinder) || (readable->GetValue() && !item.canReadText) || (writeable->GetValue() && !item.canWriteText) || (pickupable->GetValue() && !item.pickupable) || (stackable->GetValue() && !item.stackable) || (rotatable->GetValue() && !item.rotable) || (hangable->GetValue() && !item.isHangable) || (hookEast->GetValue() && !item.hookEast) || (hookSouth->GetValue() && !item.hookSouth) || (hasElevation->GetValue() && !item.hasElevation) || (ignoreLook->GetValue() && !item.ignoreLook) || (floorChange->GetValue() && !item.isFloorChange())) {
-					continue;
-				}
-
+		if (filter.hasActiveFilters()) {
+			auto filteredItems = filter.filterItems();
+			for (const ItemType* item : filteredItems) {
 				foundSearchResults = true;
-				itemsList->AddBrush(rawBrush);
+				itemsList->AddBrush(item->raw_brush);
 			}
 		}
 	}
@@ -427,11 +397,7 @@ void FindItemDialog::OnOptionChange(wxCommandEvent &WXUNUSED(event)) {
 	setSearchMode(static_cast<SearchMode>(optionsRadioBox->GetSelection()));
 }
 
-void FindItemDialog::OnServerIdChange(wxCommandEvent &WXUNUSED(event)) {
-	RefreshContentsInternal();
-}
-
-void FindItemDialog::OnClientIdChange(wxCommandEvent &WXUNUSED(event)) {
+void FindItemDialog::OnItemIdChange(wxCommandEvent &WXUNUSED(event)) {
 	RefreshContentsInternal();
 }
 
