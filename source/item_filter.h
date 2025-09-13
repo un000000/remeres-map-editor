@@ -36,6 +36,6 @@ public:
 
 private:
 	bool passesFilter(const ItemType &item) const;
-	
+
 	bool checkPropertyFilter(FilterChoice filter, bool itemHasProperty) const;
 };
