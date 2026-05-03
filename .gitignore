@@ -15,6 +15,7 @@ rme
 rme.cfg
 data/user
 world
+source/lua/FastNoiseLite.h
 
 # Visual Studio
 *.MAP
@@ -28,6 +29,7 @@ world
 *.opendb
 *.vs
 
+vcproj/
 vcproj/generated/
 vcproj/ipch/
 vcproj/Beta Release/
@@ -59,7 +61,7 @@ cmake-build-debug/
 *.exe
 *.pdb
 *.rar
-vcpkg_installed/
-*.ilk
-remeres.exe.manifest
-remeres
+*.lzma
+*.dat
+*.manifest
+canary-map-editor

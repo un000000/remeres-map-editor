@@ -189,12 +189,6 @@ void Tile::merge(Tile* other) {
 		other->spawnNpc = nullptr;
 	}
 
-	if (other->npc) {
-		delete npc;
-		npc = other->npc;
-		other->npc = nullptr;
-	}
-
 	for (const auto monster : other->monsters) {
 		addMonster(monster);
 	}
@@ -336,6 +330,39 @@ void Tile::addItem(Item* item) {
 	if (item->isSelected()) {
 		statflags |= TILESTATE_SELECTED;
 	}
+}
+
+bool Tile::removeItem(const Item* item) {
+	for (auto it = items.begin(); it != items.end(); ++it) {
+		if (*it == item) {
+			delete *it;
+			items.erase(it);
+			return true;
+		}
+	}
+	return false;
+}
+
+void Tile::clearGround() {
+	delete ground;
+	ground = nullptr;
+}
+
+void Tile::replaceGround(Item* newGround) {
+	delete ground;
+	ground = newGround;
+}
+
+void Tile::clearMonsters() {
+	for (Monster* m : monsters) {
+		delete m;
+	}
+	monsters.clear();
+}
+
+void Tile::clearSpawnMonster() {
+	delete spawnMonster;
+	spawnMonster = nullptr;
 }
 
 void Tile::select() {

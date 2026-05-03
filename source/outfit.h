@@ -22,6 +22,7 @@ struct Outfit {
 	Outfit() :
 		lookType(0), lookItem(0), lookMount(0), lookAddon(0), lookHead(0), lookBody(0), lookLegs(0), lookFeet(0) { }
 	~Outfit() { }
+	std::string name;
 	int lookType;
 	int lookItem;
 	int lookMount;
@@ -32,7 +33,7 @@ struct Outfit {
 	int lookFeet;
 
 	uint32_t getColorHash() const {
-		return lookHead << 24 | lookBody << 16 | lookLegs << 8 | lookFeet;
+		return static_cast<uint32_t>(lookHead) << 24 | static_cast<uint32_t>(lookBody) << 16 | static_cast<uint32_t>(lookLegs) << 8 | static_cast<uint32_t>(lookFeet);
 	}
 };
 

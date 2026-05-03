@@ -23,6 +23,8 @@
 #include "add_tileset_window.h"
 #include "add_item_window.h"
 #include "materials.h"
+#include "monsters.h"
+#include "npcs.h"
 
 // ============================================================================
 // Brush Palette Panel
@@ -643,10 +645,12 @@ Brush* BrushIconBox::GetSelectedBrush() const {
 }
 
 bool BrushIconBox::SelectPaginatedBrush(const Brush* whatBrush, BrushPalettePanel* brushPalettePanel) {
-	const auto index = std::ranges::find(tileset->brushlist.begin(), tileset->brushlist.end(), whatBrush) - tileset->brushlist.begin();
+	const auto brushIt = std::ranges::find(tileset->brushlist.begin(), tileset->brushlist.end(), whatBrush);
 
-	if (index < tileset->brushlist.size()) {
-		const auto page = std::ceil(index / (width * height)) + 1;
+	if (brushIt != tileset->brushlist.end()) {
+		const auto index = static_cast<size_t>(std::distance(tileset->brushlist.begin(), brushIt));
+		const auto pageSize = static_cast<size_t>(width * height);
+		const auto page = static_cast<int>(index / pageSize) + 1;
 		if (currentPage != page) {
 			brushPalettePanel->OnPageUpdate(this, page);
 		}
@@ -805,6 +809,25 @@ void BrushListBox::OnDrawItem(wxDC &dc, const wxRect &rect, size_t index) const 
 	ASSERT(index < tileset->size());
 	if (const auto sprite = g_gui.gfx.getSprite(tileset->brushlist[index]->getLookID()); sprite) {
 		sprite->DrawTo(&dc, SPRITE_SIZE_32x32, rect.GetX(), rect.GetY(), rect.GetWidth(), rect.GetHeight());
+	} else {
+		auto monsterType = g_monsters[tileset->brushlist[index]->getName()];
+		NpcType* npcType = nullptr;
+		if (!monsterType) {
+			npcType = g_npcs[tileset->brushlist[index]->getName()];
+		}
+		int lookType = 0;
+		if (monsterType) {
+			lookType = monsterType->outfit.lookType;
+		} else if (npcType) {
+			lookType = npcType->outfit.lookType;
+		}
+		if (lookType == 0) {
+			lookType = 197; // This looktype is a tribute to our beloved Carl-bot from OpenTibiaBR Discord.
+		}
+		auto creatureSprite = g_gui.gfx.getCreatureSprite(lookType);
+		if (creatureSprite) {
+			creatureSprite->DrawTo(&dc, SPRITE_SIZE_32x32, rect.GetX(), rect.GetY(), rect.GetWidth(), rect.GetHeight());
+		}
 	}
 	if (IsSelected(index)) {
 		if (HasFocus()) {

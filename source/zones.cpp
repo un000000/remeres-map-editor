@@ -24,7 +24,7 @@ Zones::~Zones() {
 	zones.clear();
 }
 
-bool Zones::addZone(std::string name, unsigned int id) {
+bool Zones::addZone(const std::string &name, unsigned int id) {
 	if (hasZone(name)) {
 		return false;
 	}
@@ -36,11 +36,11 @@ bool Zones::addZone(std::string name, unsigned int id) {
 	return true;
 }
 
-bool Zones::addZone(std::string name) {
+bool Zones::addZone(const std::string &name) {
 	return addZone(name, generateID());
 }
 
-bool Zones::hasZone(std::string name) {
+bool Zones::hasZone(const std::string name) {
 	std::string lower_name = as_lower_str(name);
 	for (const auto &zone : zones) {
 		if (as_lower_str(zone.first) == lower_name) {
@@ -54,7 +54,7 @@ bool Zones::hasZone(unsigned int id) {
 	return used_ids.find(id) != used_ids.end();
 }
 
-void Zones::removeZone(std::string name) {
+void Zones::removeZone(const std::string &name) {
 	if (!hasZone(name)) {
 		return;
 	}

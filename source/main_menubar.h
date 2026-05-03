@@ -59,6 +59,7 @@ namespace MenuBar {
 		REMOVE_ON_SELECTION_ITEM,
 		REMOVE_ON_SELECTION_MONSTER,
 		COUNT_ON_SELECTION_MONSTER,
+		ON_EDIT_EDIT_MONSTER_SPAWN_TIME,
 		SELECT_MODE_COMPENSATE,
 		SELECT_MODE_CURRENT,
 		SELECT_MODE_LOWER,
@@ -158,7 +159,6 @@ namespace MenuBar {
 		FLOOR_14,
 		FLOOR_15,
 		DEBUG_VIEW_DAT,
-		EXTENSIONS,
 		GOTO_WEBSITE,
 		ABOUT,
 		SEARCH_ON_MAP_DUPLICATED_ITEMS,
@@ -167,6 +167,7 @@ namespace MenuBar {
 		REMOVE_ON_SELECTION_DUPLICATED_ITEMS,
 		SEARCH_ON_MAP_WALLS_UPON_WALLS,
 		SEARCH_ON_SELECTION_WALLS_UPON_WALLS,
+		IMPORT_BITMAP_TO_MAP,
 	};
 }
 
@@ -188,6 +189,7 @@ public:
 	void AddRecentFile(FileName file);
 	void LoadRecentFiles();
 	void SaveRecentFiles();
+	void LoadScriptsMenu();
 	std::vector<wxString> GetRecentFiles();
 
 	// Interface
@@ -213,6 +215,7 @@ public:
 	void OnImportMonsterData(wxCommandEvent &event);
 	void OnImportNpcData(wxCommandEvent &event);
 	void OnImportMinimap(wxCommandEvent &event);
+	void OnImportBitmapToMap(wxCommandEvent &event);
 	void OnExportMinimap(wxCommandEvent &event);
 	void OnExportTilesets(wxCommandEvent &event);
 	void OnReloadDataFiles(wxCommandEvent &event);
@@ -258,6 +261,7 @@ public:
 	void OnReplaceItemsOnSelection(wxCommandEvent &event);
 	void OnRemoveItemOnSelection(wxCommandEvent &event);
 	void OnRemoveMonstersOnSelection(wxCommandEvent &event);
+	void OnEditMonsterSpawnTime(wxCommandEvent &event);
 	void OnCountMonstersOnSelection(wxCommandEvent &event);
 
 	// Map menu
@@ -303,7 +307,6 @@ public:
 
 	// About Menu
 	void OnDebugViewDat(wxCommandEvent &event);
-	void OnListExtensions(wxCommandEvent &event);
 	void OnGotoWebsite(wxCommandEvent &event);
 	void OnAbout(wxCommandEvent &event);
 	void OnSearchForDuplicateItemsOnMap(wxCommandEvent &event);
@@ -326,6 +329,7 @@ protected:
 protected:
 	MainFrame* frame;
 	wxMenuBar* menubar;
+	wxMenu* scriptsMenu = nullptr;
 
 	// Used so that calling Check on menu items don't trigger events (avoids infinite recursion)
 	bool checking_programmaticly;

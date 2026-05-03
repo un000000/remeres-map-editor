@@ -23,6 +23,10 @@
 #include "monsters.h"
 #include "monster_brush.h"
 
+#include <wx/dir.h>
+
+#include "lua_parser.h"
+
 MonsterDatabase g_monsters;
 
 MonsterType::MonsterType() :
@@ -30,6 +34,7 @@ MonsterType::MonsterType() :
 	in_other_tileset(false),
 	standard(false),
 	name(""),
+	folder(""),
 	brush(nullptr) {
 	////
 }
@@ -39,6 +44,7 @@ MonsterType::MonsterType(const MonsterType &ct) :
 	in_other_tileset(ct.in_other_tileset),
 	standard(ct.standard),
 	name(ct.name),
+	folder(ct.folder),
 	outfit(ct.outfit),
 	brush(ct.brush) {
 	////
@@ -49,6 +55,7 @@ MonsterType &MonsterType::operator=(const MonsterType &ct) {
 	in_other_tileset = ct.in_other_tileset;
 	standard = ct.standard;
 	name = ct.name;
+	folder = ct.folder;
 	outfit = ct.outfit;
 	brush = ct.brush;
 	return *this;
@@ -56,53 +63,6 @@ MonsterType &MonsterType::operator=(const MonsterType &ct) {
 
 MonsterType::~MonsterType() {
 	////
-}
-
-MonsterType* MonsterType::loadFromXML(pugi::xml_node node, wxArrayString &warnings) {
-	pugi::xml_attribute attribute;
-	if (!(attribute = node.attribute("name"))) {
-		warnings.push_back("Couldn't read name tag of monster node.");
-		return nullptr;
-	}
-
-	MonsterType* ct = newd MonsterType();
-	ct->name = attribute.as_string();
-
-	if ((attribute = node.attribute("looktype"))) {
-		ct->outfit.lookType = attribute.as_int();
-		if (g_gui.gfx.getCreatureSprite(ct->outfit.lookType) == nullptr) {
-			warnings.push_back("Invalid monster \"" + wxstr(ct->name) + "\" look type #" + std::to_string(ct->outfit.lookType));
-		}
-	}
-
-	if ((attribute = node.attribute("lookitem"))) {
-		ct->outfit.lookItem = attribute.as_int();
-	}
-
-	if ((attribute = node.attribute("lookmount"))) {
-		ct->outfit.lookMount = attribute.as_int();
-	}
-
-	if ((attribute = node.attribute("lookaddon"))) {
-		ct->outfit.lookAddon = attribute.as_int();
-	}
-
-	if ((attribute = node.attribute("lookhead"))) {
-		ct->outfit.lookHead = attribute.as_int();
-	}
-
-	if ((attribute = node.attribute("lookbody"))) {
-		ct->outfit.lookBody = attribute.as_int();
-	}
-
-	if ((attribute = node.attribute("looklegs"))) {
-		ct->outfit.lookLegs = attribute.as_int();
-	}
-
-	if ((attribute = node.attribute("lookfeet"))) {
-		ct->outfit.lookFeet = attribute.as_int();
-	}
-	return ct;
 }
 
 MonsterType* MonsterType::loadFromOTXML(const FileName &filename, pugi::xml_document &doc, wxArrayString &warnings) {
@@ -121,6 +81,7 @@ MonsterType* MonsterType::loadFromOTXML(const FileName &filename, pugi::xml_docu
 
 	MonsterType* ct = newd MonsterType();
 	ct->name = attribute.as_string();
+	ct->outfit.name = ct->name;
 
 	for (pugi::xml_node optionNode = node.first_child(); optionNode; optionNode = optionNode.next_sibling()) {
 		if (as_lower_str(optionNode.name()) != "look") {
@@ -220,39 +181,6 @@ bool MonsterDatabase::hasMissing() const {
 		}
 	}
 	return false;
-}
-
-bool MonsterDatabase::loadFromXML(const FileName &filename, bool standard, wxString &error, wxArrayString &warnings) {
-	pugi::xml_document doc;
-	pugi::xml_parse_result result = doc.load_file(filename.GetFullPath().mb_str());
-	if (!result) {
-		error = "Couldn't open file \"" + filename.GetFullName() + "\", invalid format?";
-		return false;
-	}
-
-	pugi::xml_node node = doc.child("monsters");
-	if (!node) {
-		error = "Invalid file signature, this file is not a valid monsters file.";
-		return false;
-	}
-
-	for (pugi::xml_node monsterNode = node.first_child(); monsterNode; monsterNode = monsterNode.next_sibling()) {
-		if (as_lower_str(monsterNode.name()) != "monster") {
-			continue;
-		}
-
-		MonsterType* monsterType = MonsterType::loadFromXML(monsterNode, warnings);
-		if (monsterType) {
-			monsterType->standard = standard;
-			if ((*this)[monsterType->name]) {
-				warnings.push_back("Duplicate monster type name \"" + wxstr(monsterType->name) + "\"! Discarding...");
-				delete monsterType;
-			} else {
-				monster_map[as_lower_str(monsterType->name)] = monsterType;
-			}
-		}
-	}
-	return true;
 }
 
 bool MonsterDatabase::importXMLFromOT(const FileName &filename, wxString &error, wxArrayString &warnings) {
@@ -360,4 +288,104 @@ bool MonsterDatabase::saveToXML(const FileName &filename) {
 		}
 	}
 	return doc.save_file(filename.GetFullPath().mb_str(), "\t", pugi::format_default, pugi::encoding_utf8);
+}
+
+wxArrayString MonsterDatabase::getMissingMonsterNames() const {
+	wxArrayString missingMonsters;
+	for (const auto &monsterEntry : monster_map) {
+		if (monsterEntry.second->missing) {
+			missingMonsters.Add(monsterEntry.second->name);
+		}
+	}
+	return missingMonsters;
+}
+
+static std::string extractTopFolder(const wxString &filePath, const wxString &directory) {
+	wxFileName fn(filePath);
+	wxString relPath = fn.GetPath().Lower();
+	wxString dirLower = directory.Lower();
+	if (!relPath.StartsWith(dirLower)) {
+		return "";
+	}
+	relPath = relPath.Mid(dirLower.Length());
+	if (!relPath.IsEmpty() && (relPath[0] == '/' || relPath[0] == '\\')) {
+		relPath = relPath.Mid(1);
+	}
+	const int slash = relPath.Find('/');
+	const int backslash = relPath.Find('\\');
+	int sep = wxNOT_FOUND;
+	if (slash != wxNOT_FOUND && backslash != wxNOT_FOUND) {
+		sep = std::min(slash, backslash);
+	} else if (slash != wxNOT_FOUND) {
+		sep = slash;
+	} else if (backslash != wxNOT_FOUND) {
+		sep = backslash;
+	}
+	wxString fld = (sep == wxNOT_FOUND) ? relPath : relPath.Left(sep);
+	return fld.ToStdString();
+}
+
+bool MonsterDatabase::loadFromLuaDir(const wxString &directory, wxString &error, wxArrayString &warnings) {
+	if (directory.IsEmpty()) {
+		return true;
+	}
+	if (!wxDir::Exists(directory)) {
+		error = "Monsters Lua directory does not exist: " + directory;
+		return false;
+	}
+
+	wxArrayString luaFiles;
+	wxDir::GetAllFiles(directory, &luaFiles, "*.lua", wxDIR_FILES | wxDIR_DIRS | wxDIR_HIDDEN);
+
+	int fileCount = 0;
+	for (const auto &filePath : luaFiles) {
+		if (++fileCount % 50 == 0) {
+			wxSafeYield();
+		}
+		std::string content = LuaParser::readFileContent(filePath.ToStdString());
+		if (content.empty()) {
+			warnings.push_back("Could not open: " + filePath);
+			continue;
+		}
+
+		std::string name = LuaParser::parseCreateCall(content, "Game.createMonsterType");
+		if (name.empty()) {
+			name = LuaParser::parseLocalString(content, "internalMonsterName");
+		}
+		if (name.empty()) {
+			continue;
+		}
+
+		MonsterType* existing = (*this)[name];
+		if (existing) {
+			if (existing->folder.empty()) {
+				existing->folder = extractTopFolder(filePath, directory);
+			}
+			if (!existing->missing) {
+				continue;
+			}
+			Outfit parsed;
+			parsed.name = existing->name;
+			if (LuaParser::parseOutfit(content, parsed)) {
+				existing->outfit = parsed;
+				existing->missing = false;
+			}
+			continue;
+		}
+
+		MonsterType* ct = newd MonsterType();
+		ct->name = name;
+		ct->outfit.name = name;
+		ct->standard = false;
+
+		ct->folder = extractTopFolder(filePath, directory);
+
+		if (!LuaParser::parseOutfit(content, ct->outfit)) {
+			delete ct;
+			continue;
+		}
+
+		monster_map[as_lower_str(ct->name)] = ct;
+	}
+	return true;
 }

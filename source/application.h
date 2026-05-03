@@ -44,11 +44,11 @@ public:
 	virtual void MacOpenFiles(const wxArrayString &fileNames);
 	virtual int OnExit();
 	void Unload();
+	void ShutdownServices();
 
 private:
 	bool m_startup;
 	wxString m_file_to_open;
-	void FixVersionDiscrapencies();
 	bool ParseCommandLineMap(wxString &fileName);
 
 	virtual void OnFatalException();
@@ -68,8 +68,10 @@ public:
 
 	void UpdateMenubar();
 	bool DoQueryClose();
-	bool DoQuerySave(bool doclose = true);
+	bool DoQuerySave(bool doclose = true, bool checkTileset = true);
 	bool DoQuerySaveTileset(bool doclose = true);
+	void ShowMissingMonsters();
+	void ShowMissingNpcs();
 	bool DoQueryImportCreatures();
 	bool LoadMap(FileName name);
 

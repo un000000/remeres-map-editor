@@ -18,8 +18,9 @@
 #include "main.h"
 
 #include "settings.h"
+
 #include "gui_ids.h"
-#include "client_version.h"
+#include "client_assets.h"
 
 Settings g_settings;
 
@@ -213,19 +214,18 @@ void Settings::IO(IOMode mode) {
 	Int(SHOW_HOUSES, 1);
 	Int(SHOW_BLOCKING, 0);
 	Int(SHOW_TOOLTIPS, 1);
+	Int(SHOW_PERFORMANCE_STATS, 0);
 	Int(SHOW_ONLY_TILEFLAGS, 0);
 	Int(SHOW_ONLY_MODIFIED_TILES, 0);
-	Int(SHOW_PREVIEW, 1);
+	Int(SHOW_PREVIEW, 0);
 	Int(SHOW_WALL_HOOKS, 0);
 	Int(SHOW_PICKUPABLES, 0);
 	Int(SHOW_MOVEABLES, 0);
 
 	section("Version");
 	Int(VERSION_ID, 0);
-	Int(CHECK_SIGNATURES, 1);
 	Int(USE_CUSTOM_DATA_DIRECTORY, 0);
 	String(DATA_DIRECTORY, "");
-	String(EXTENSIONS_DIRECTORY, "");
 	String(ASSETS_DATA_DIRS, "");
 
 	section("Editor");
@@ -265,7 +265,7 @@ void Settings::IO(IOMode mode) {
 	Int(DEFAULT_SPAWN_NPC_TIME, 60);
 	Int(MAX_SPAWN_NPC_RADIUS, 30);
 	Int(CURRENT_SPAWN_NPC_RADIUS, 1);
-	Int(DEFAULT_CLIENT_VERSION, CLIENT_VERSION_NONE);
+	Int(DEFAULT_CLIENT_VERSION, std::atoi(ClientAssets::getVersionName().c_str()));
 	Int(RAW_LIKE_SIMONE, 1);
 	Int(ONLY_ONE_INSTANCE, 1);
 	Int(SHOW_TILESET_EDITOR, 0);
@@ -289,7 +289,6 @@ void Settings::IO(IOMode mode) {
 	Int(HIDE_ITEMS_WHEN_ZOOMED, 1);
 	String(SCREENSHOT_DIRECTORY, "");
 	String(SCREENSHOT_FORMAT, "png");
-	IntToSave(USE_MEMCACHED_SPRITES, 0);
 	Int(MINIMAP_UPDATE_DELAY, 333);
 	Int(MINIMAP_VIEW_BOX, 1);
 	String(MINIMAP_EXPORT_DIR, "");
@@ -330,6 +329,7 @@ void Settings::IO(IOMode mode) {
 	Int(WINDOW_WIDTH, 700);
 	Int(WINDOW_MAXIMIZED, 0);
 	Int(WELCOME_DIALOG, 1);
+	Int(USE_OLD_ITEM_PROPERTIES_WINDOW, 1);
 
 	section("Hotkeys");
 	String(NUMERICAL_HOTKEYS, "none:{}\nnone:{}\nnone:{}\nnone:{}\nnone:{}\nnone:{}\nnone:{}\nnone:{}\nnone:{}\nnone:{}\n");
@@ -343,6 +343,11 @@ void Settings::IO(IOMode mode) {
 	String(TOOLBAR_BRUSHES_LAYOUT, "");
 	String(TOOLBAR_POSITION_LAYOUT, "");
 	String(TOOLBAR_SIZES_LAYOUT, "");
+	String(TOOLBAR_INDICATORS_LAYOUT, "");
+
+	section("Creatures");
+	String(MONSTERS_LUA_DIRECTORY, "");
+	String(NPCS_LUA_DIRECTORY, "");
 
 	section("");
 	Int(GOTO_WEBSITE_ON_BOOT, 0);
@@ -371,7 +376,7 @@ void Settings::load() {
 		use_file_cfg = true;
 		g_settings.setInteger(Config::INDIRECTORY_INSTALLATION, 1);
 	} else { // Use registry
-		conf = newd wxConfig("Remere's Map Editor", "Remere", "", "", wxCONFIG_USE_GLOBAL_FILE);
+		conf = newd wxConfig("Canary Map Editor", "OpenTibiaBR", "", "", wxCONFIG_USE_GLOBAL_FILE);
 		g_settings.setInteger(Config::INDIRECTORY_INSTALLATION, 0);
 	}
 #else
@@ -400,34 +405,33 @@ void Settings::save(bool endoftheworld) {
 	IO(SAVE);
 #ifdef __WINDOWS__
 	if (use_file_cfg) {
-		wxFileConfig* conf = dynamic_cast<wxFileConfig*>(wxConfig::Get());
-		if (!conf) {
+		wxFileConfig* file_conf = dynamic_cast<wxFileConfig*>(wxConfig::Get());
+		if (!file_conf) {
 			return;
 		}
 		FileName filename("rme.cfg");
 		wxFileOutputStream file(filename.GetFullPath());
-		conf->Save(file);
+		file_conf->Save(file);
 	}
 #else
-	wxFileConfig* conf = dynamic_cast<wxFileConfig*>(wxConfig::Get());
-	if (!conf) {
+	wxFileConfig* file_conf = dynamic_cast<wxFileConfig*>(wxConfig::Get());
+	if (!file_conf) {
 		return;
 	}
 	FileName filename("./rme.cfg");
 	if (filename.FileExists()) { // Use local file if it exists
 		wxFileOutputStream file(filename.GetFullPath());
-		conf->Save(file);
+		file_conf->Save(file);
 	} else { // Else use global (user-specific) conf
 		wxString path = wxStandardPaths::Get().GetUserConfigDir() + "/.rme/rme.cfg";
 		filename.Assign(path);
 		filename.Mkdir(0755, wxPATH_MKDIR_FULL);
 		wxFileOutputStream file(filename.GetFullPath());
-		conf->Save(file);
+		file_conf->Save(file);
 	}
 #endif
 	if (endoftheworld) {
-		wxConfigBase* conf = dynamic_cast<wxConfigBase*>(wxConfig::Get());
+		auto base_conf = std::unique_ptr<wxConfigBase>(dynamic_cast<wxConfigBase*>(wxConfig::Get()));
 		wxConfig::Set(nullptr);
-		delete conf;
 	}
 }

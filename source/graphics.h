@@ -20,14 +20,25 @@
 
 #include "outfit.h"
 #include "common.h"
+#include "enums.h"
 
-#include "client_version.h"
 #include <wx/artprov.h>
+#include <chrono>
+
+// Forward declarations
+namespace canary {
+	namespace protobuf {
+		namespace appearances {
+			class Appearance;
+		}
+	}
+}
 
 enum SpriteSize {
 	SPRITE_SIZE_16x16,
 	// SPRITE_SIZE_24x24,
 	SPRITE_SIZE_32x32,
+	SPRITE_SIZE_64x64,
 	SPRITE_SIZE_COUNT
 };
 
@@ -48,6 +59,13 @@ class Animator;
 struct SpriteLight {
 	uint8_t intensity = 0;
 	uint8_t color = 0;
+};
+
+struct SpriteUV {
+	float u0;
+	float v0;
+	float u1;
+	float v1;
 };
 
 class Sprite {
@@ -80,23 +98,19 @@ public:
 	virtual ~GameSprite();
 
 	int getIndex(int width, int height, int layer, int pattern_x, int pattern_y, int pattern_z, int frame) const;
-	GLuint getHardwareID(int _x, int _y, int _layer, int _subtype, int _pattern_x, int _pattern_y, int _pattern_z, int _frame);
-	GLuint getHardwareID(int _x, int _y, int _dir, int _addon, int _pattern_z, const Outfit &_outfit, int _frame); // CreatureDatabase
+	GLuint getHardwareID(int _layer, int _count, int _pattern_x, int _pattern_y, int _pattern_z, int _frame);
+	SpriteUV getAtlasUVs(int _layer, int _count, int _pattern_x, int _pattern_y, int _pattern_z, int _frame);
+	uint32_t getSpriteID(int _layer, int _count, int _pattern_x, int _pattern_y, int /*_pattern_z*/, int _frame);
+
 	virtual void DrawTo(wxDC* dc, SpriteSize sz, int start_x, int start_y, int width = -1, int height = -1);
 
 	virtual void unloadDC();
 
-	void clean(int time);
-
-	uint16_t getDrawHeight() const noexcept {
-		return draw_height;
-	}
-	const wxPoint &getDrawOffset() const noexcept {
-		return draw_offset;
-	}
-	uint8_t getMiniMapColor() const noexcept {
-		return minimap_color;
-	}
+	uint16_t getDrawHeight() const;
+	wxPoint getDrawOffset();
+	uint8_t getWidth();
+	uint8_t getHeight();
+	uint8_t getMiniMapColor() const;
 
 	bool hasLight() const noexcept {
 		return has_light;
@@ -110,24 +124,25 @@ public:
 protected:
 	class Image;
 	class NormalImage;
-	class TemplateImage;
+	class OutfitImage;
 
-	wxMemoryDC* getDC(SpriteSize size);
-	TemplateImage* getTemplateImage(int sprite_index, const Outfit &outfit);
+	wxMemoryDC* getDC(SpriteSize spriteSize);
 
 	class Image {
 	public:
-		Image();
+		Image() = default;
 		virtual ~Image();
 
-		bool isGLLoaded;
-		int lastaccess;
+		bool isGLLoaded = false;
+		std::chrono::steady_clock::time_point lastaccess {};
 
 		void visit();
-		virtual void clean(int time);
+		virtual void clean(std::chrono::steady_clock::time_point now);
 
 		virtual GLuint getHardwareID() = 0;
+#if CLIENT_VERSION < 1100
 		virtual uint8_t* getRGBData() = 0;
+#endif
 		virtual uint8_t* getRGBAData() = 0;
 
 	protected:
@@ -137,20 +152,30 @@ protected:
 
 	class NormalImage : public Image {
 	public:
-		NormalImage();
+		NormalImage() = default;
 		virtual ~NormalImage();
 
-		// We use the sprite id as GL texture id
-		uint32_t id;
+		uint32_t id = 0;
+		GLuint glTextureId = 0; // used by EditorImage (which inherits from NormalImage)
 
-		// This contains the pixel data
-		uint16_t size;
-		uint8_t* dump;
+		float atlasU0 = 0;
+		float atlasV0 = 0;
+		float atlasU1 = 1;
+		float atlasV1 = 1;
+		GLuint atlasTextureId = 0;
 
-		virtual void clean(int time);
+		uint16_t size = 0;
+		uint8_t* m_cachedData = nullptr;
+
+		void clean(std::chrono::steady_clock::time_point now) override;
 
 		virtual GLuint getHardwareID();
-		virtual uint8_t* getRGBData();
+		SpriteUV getAtlasUVs() const {
+			return { atlasU0, atlasV0, atlasU1, atlasV1 };
+		}
+#if CLIENT_VERSION < 1100
+		virtual uint8_t* getRGBData() = 0;
+#endif
 		virtual uint8_t* getRGBAData();
 
 	protected:
@@ -162,6 +187,8 @@ protected:
 	public:
 		EditorImage(const wxArtID &bitmapId);
 
+		GLuint getHardwareID() override;
+
 	protected:
 		void createGLTexture(GLuint textureId) override;
 		void unloadGLTexture(GLuint textureId) override;
@@ -170,34 +197,42 @@ protected:
 		wxArtID bitmapId;
 	};
 
-	class TemplateImage : public Image {
+	class OutfitImage : public Image {
 	public:
-		TemplateImage(GameSprite* parent, int v, const Outfit &outfit);
-		virtual ~TemplateImage();
+		OutfitImage(GameSprite* initParent, int initSpriteIndex, GLuint initSpriteId, const Outfit &initOutfit);
+		~OutfitImage();
 
 		virtual GLuint getHardwareID();
-		virtual uint8_t* getRGBData();
 		virtual uint8_t* getRGBAData();
 
-		GLuint gl_tid;
-		GameSprite* parent;
-		int sprite_index;
-		uint8_t lookHead;
-		uint8_t lookBody;
-		uint8_t lookLegs;
-		uint8_t lookFeet;
+		GLuint m_textureId = 0;
+		GLuint m_spriteId = 0;
+		GameSprite* m_parent = 0;
+		int m_spriteIndex = 0;
+		bool m_isGLLoaded = false;
+		uint8_t* m_cachedOutfitData = nullptr;
 
-	protected:
+		Outfit m_outfit;
+
 		void colorizePixel(uint8_t color, uint8_t &r, uint8_t &b, uint8_t &g);
+		uint8_t* getOutfitData(int spriteId);
 
-		virtual void createGLTexture(GLuint ignored = 0);
-		virtual void unloadGLTexture(GLuint ignored = 0);
+		virtual void createGLTexture(GLuint, GLuint);
+		virtual void unloadGLTexture(GLuint);
 	};
 
 	uint32_t id;
-	wxMemoryDC* dc[SPRITE_SIZE_COUNT];
+	wxMemoryDC* m_wxMemoryDc[SPRITE_SIZE_COUNT];
 
 public:
+	std::shared_ptr<GameSprite::OutfitImage> getOutfitImage(int spriteId, int spriteIndex, const Outfit &outfit);
+
+	uint32_t getID() const {
+		return id;
+	}
+
+	bool isDrawOffsetLoaded = false;
+
 	// GameSprite info
 	uint8_t height;
 	uint8_t width;
@@ -205,7 +240,7 @@ public:
 	uint8_t pattern_x;
 	uint8_t pattern_y;
 	uint8_t pattern_z;
-	uint8_t frames;
+	uint8_t sprite_phase_size;
 	uint32_t numsprites;
 
 	Animator* animator;
@@ -220,10 +255,12 @@ public:
 	SpriteLight light;
 
 	std::vector<NormalImage*> spriteList;
-	std::list<TemplateImage*> instanced_templates; // Templates that use this sprite
+	std::list<std::shared_ptr<GameSprite::OutfitImage>> instanced_templates; // Templates that use this sprite
 
 	friend class GraphicManager;
 };
+
+extern GameSprite g_gameSprite;
 
 struct FrameDuration {
 	int min;
@@ -301,12 +338,8 @@ public:
 	uint16_t getItemSpriteMinID() const noexcept {
 		return 100;
 	}
-	uint16_t getItemSpriteMaxID() const noexcept {
-		return item_count;
-	}
-	uint16_t getCreatureSpriteMaxID() const noexcept {
-		return creature_count;
-	}
+	uint16_t getItemSpriteMaxID() const;
+	uint16_t getCreatureSpriteMaxID() const;
 
 	// Get an unused texture id (this is acquired by simply increasing a value starting from 0x10000000)
 	GLuint getFreeTextureID();
@@ -320,6 +353,9 @@ public:
 	bool loadSpriteMetadataFlags(FileReadHandle &file, GameSprite* sType, wxString &error, wxArrayString &warnings);
 	bool loadSpriteData(const FileName &datafile, wxString &error, wxArrayString &warnings);
 
+	bool loadItemSpriteMetadata(const std::shared_ptr<ItemType> &t, wxString &error, wxArrayString &warnings);
+	bool loadOutfitSpriteMetadata(canary::protobuf::appearances::Appearance outfit, wxString &error, wxArrayString &warnings);
+
 	// Cleans old & unused textures according to config settings
 	void garbageCollection();
 	void addSpriteToCleanup(GameSprite* spr);
@@ -330,11 +366,6 @@ public:
 	wxFileName getSpritesFileName() const {
 		return sprites_file;
 	}
-
-	bool hasTransparency() const;
-	bool isUnloaded() const;
-
-	ClientVersion* client_version;
 
 private:
 	bool unloaded;
@@ -348,26 +379,26 @@ private:
 	ImageMap image_space;
 	std::deque<GameSprite*> cleanup_list;
 
-	DatFormat dat_format;
 	uint16_t item_count;
 	uint16_t creature_count;
 	bool otfi_found;
 	bool is_extended;
-	bool has_transparency;
 	bool has_frame_durations;
 	bool has_frame_groups;
 	wxFileName metadata_file;
 	wxFileName sprites_file;
 
 	int loaded_textures;
-	int lastclean;
+	std::chrono::steady_clock::time_point lastclean;
 
 	wxStopWatch* animation_timer;
 
 	friend class GameSprite::Image;
 	friend class GameSprite::NormalImage;
 	friend class GameSprite::EditorImage;
-	friend class GameSprite::TemplateImage;
+	friend class GameSprite::OutfitImage;
 };
+
+extern GraphicManager g_graphics;
 
 #endif
