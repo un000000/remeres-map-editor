@@ -277,36 +277,27 @@ void Item::setActionID(unsigned short n) {
 	setAttribute("aid", n);
 }
 
-void Item::setKey(const std::string &str) {
-	setAttribute("keyValue123", str);
+void Item::setLabels(const std::string &str) {
+	setAttribute("attribute_labels", str);
 }
 
-void Item::setText(const std::string &str) {
-	setAttribute("text", str);
-}
-
-void Item::setDescription(const std::string &str) {
-	setAttribute("desc", str);
-}
-
-void Item::setLabels(const std::vector<std::string> &labels) {
-	// Filter out empty strings before storing
+void Item::setLabelsFromVector(const std::vector<std::string> &keys) {
 	std::string joined;
-	for (const auto &label : labels) {
-		if (!label.empty()) {
+	for (const auto &k : keys) {
+		if (!k.empty()) {
 			if (!joined.empty()) joined += '\n';
-			joined += label;
+			joined += k;
 		}
 	}
 	if (joined.empty()) {
-		eraseAttribute("labels");
+		eraseAttribute("attribute_labels");
 	} else {
-		setAttribute("labels", joined);
+		setAttribute("attribute_labels", joined);
 	}
 }
 
-std::vector<std::string> Item::getLabels() const {
-	const std::string* raw = getStringAttribute("labels");
+std::vector<std::string> Item::getLabelsAsVector() const {
+	const std::string* raw = getStringAttribute("attribute_labels");
 	std::vector<std::string> result;
 	if (!raw || raw->empty()) {
 		return result;
@@ -317,6 +308,14 @@ std::vector<std::string> Item::getLabels() const {
 		result.push_back(token);
 	}
 	return result;
+}
+
+void Item::setText(const std::string &str) {
+	setAttribute("text", str);
+}
+
+void Item::setDescription(const std::string &str) {
+	setAttribute("desc", str);
 }
 
 double Item::getWeight() {

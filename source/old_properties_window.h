@@ -47,14 +47,14 @@ protected:
 	wxSpinCtrl* monsterWeightField = nullptr;
 	wxSpinCtrl* action_id_field;
 	wxSpinCtrl* unique_id_field;
-	wxTextCtrl* key_field;
+	wxTextCtrl* key_field = nullptr;
+	wxGrid* key_grid = nullptr;
 	wxSpinCtrl* door_id_field;
 	wxChoice* depot_id_field;
 	PositionCtrl* destination_field;
 	wxChoice* splash_type_field;
 	wxTextCtrl* text_field;
 	wxTextCtrl* description_field;
-	wxGrid* labels_grid = nullptr;
 	std::vector<ContainerItemButton*> container_items;
 
 	friend class ContainerItemButton;

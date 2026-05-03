@@ -359,18 +359,17 @@ public:
 	void setActionID(uint16_t n);
 	uint16_t getActionID() const;
 
-	void setKey(const std::string &str);
-	std::string getKey() const;
+	void setLabels(const std::string &str);
+	std::string getLabelsRaw() const;
+
+	void setLabelsFromVector(const std::vector<std::string> &keys);
+	std::vector<std::string> getLabelsAsVector() const;
 
 	void setText(const std::string &str);
 	std::string getText() const;
 
 	void setDescription(const std::string &str);
 	std::string getDescription() const;
-
-	// Labels (list of arbitrary strings, stored joined by '\n' under key "labels")
-	void setLabels(const std::vector<std::string> &labels);
-	std::vector<std::string> getLabels() const;
 
 	void animate();
 	int getFrame() const {
@@ -424,8 +423,8 @@ inline uint16_t Item::getActionID() const {
 	return 0;
 }
 
-inline std::string Item::getKey() const {
-	const std::string* a = getStringAttribute("keyValue123");
+inline std::string Item::getLabelsRaw() const {
+	const std::string* a = getStringAttribute("attribute_labels");
 	if (a) {
 		return *a;
 	}

@@ -284,7 +284,6 @@ wxWindow* PropertiesWindow::createContainerPanel(wxWindow* parent) {
 }
 
 wxWindow* PropertiesWindow::createLabelsPanel(wxWindow* parent) {
-	wxPanel* panel = newd wxPanel(parent, ITEM_PROPERTIES_LABELS_TAB);
 	wxSizer* topSizer = newd wxBoxSizer(wxVERTICAL);
 
 	labelsGrid = newd wxGrid(panel, wxID_ANY, wxDefaultPosition, wxSize(-1, 160));
@@ -296,15 +295,6 @@ wxWindow* PropertiesWindow::createLabelsPanel(wxWindow* parent) {
 	labelsGrid->EnableEditing(true);
 	labelsGrid->SetColLabelValue(0, "Label");
 	labelsGrid->SetColSize(0, 580);
-
-	// Populate existing labels
-	std::vector<std::string> labels = edit_item->getLabels();
-	// Always add one extra empty row at the end
-	int rows = static_cast<int>(labels.size()) + 1;
-	labelsGrid->AppendRows(rows);
-	for (int i = 0; i < static_cast<int>(labels.size()); ++i) {
-		labelsGrid->SetCellValue(i, 0, wxstr(labels[i]));
-	}
 
 	topSizer->Add(labelsGrid, wxSizerFlags(1).Expand().DoubleBorder());
 
@@ -324,7 +314,6 @@ void PropertiesWindow::saveLabelsPanel() {
 			labels.push_back(val);
 		}
 	}
-	edit_item->setLabels(labels);
 }
 
 void PropertiesWindow::onLabelsCellChanged(wxGridEvent &evt) {

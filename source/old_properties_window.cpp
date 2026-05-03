@@ -66,9 +66,51 @@ OldPropertiesWindow::OldPropertiesWindow(wxWindow* win_parent, const Map* map, c
 		subsizer->Add(newd wxStaticText(this, wxID_ANY, "ID " + i2ws(item->getID())));
 		subsizer->Add(newd wxStaticText(this, wxID_ANY, "\"" + wxstr(item->getName()) + "\""));
 
-		subsizer->Add(newd wxStaticText(this, wxID_ANY, "Key"), wxSizerFlags(1).Center());
-		key_field = newd wxTextCtrl(this, wxID_ANY, wxstr(item->getKey()), wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE);
-		subsizer->Add(key_field, wxSizerFlags(7).Expand());
+		subsizer->Add(newd wxStaticText(this, wxID_ANY, "Labels"), wxSizerFlags(1).Center());
+		key_grid = newd wxGrid(this, wxID_ANY, wxDefaultPosition, wxSize(-1, 80));
+		key_grid->CreateGrid(0, 1);
+		key_grid->DisableDragRowSize();
+		key_grid->DisableDragColSize();
+		key_grid->SetSelectionMode(wxGrid::wxGridSelectRows);
+		key_grid->SetRowLabelSize(0);
+		key_grid->SetColLabelSize(0);
+		key_grid->EnableEditing(true);
+		key_grid->SetColSize(0, 340);
+		{
+			std::vector<std::string> existingKeys = edit_item->getLabelsAsVector();
+			key_grid->AppendRows(static_cast<int>(existingKeys.size()) + 1);
+			for (int i = 0; i < static_cast<int>(existingKeys.size()); ++i) {
+				key_grid->SetCellValue(i, 0, wxstr(existingKeys[i]));
+			}
+		}
+		key_grid->Bind(wxEVT_GRID_CELL_CHANGED, [this](wxGridEvent &evt) {
+			if (evt.GetCol() == 0) {
+				int lastRow = key_grid->GetNumberRows() - 1;
+				if (!key_grid->GetCellValue(lastRow, 0).IsEmpty()) {
+					key_grid->AppendRows(1);
+					key_grid->MakeCellVisible(key_grid->GetNumberRows() - 1, 0);
+				}
+			}
+			evt.Skip();
+		});
+		key_grid->Bind(wxEVT_GRID_CELL_LEFT_CLICK, [this](wxGridEvent &evt) {
+			key_grid->SetGridCursor(evt.GetRow(), evt.GetCol());
+			key_grid->EnableCellEditControl();
+			evt.Skip();
+		});
+		key_grid->Bind(wxEVT_KEY_DOWN, [this](wxKeyEvent &evt) {
+			if (evt.GetKeyCode() == WXK_DELETE && !key_grid->IsCellEditControlEnabled()) {
+				wxArrayInt selected = key_grid->GetSelectedRows();
+				int row = selected.IsEmpty() ? key_grid->GetGridCursorRow() : selected[selected.GetCount() - 1];
+				if (row >= 0) {
+					if (key_grid->GetNumberRows() > 1) key_grid->DeleteRows(row, 1);
+					else key_grid->SetCellValue(0, 0, wxEmptyString);
+				}
+				return;
+			}
+			evt.Skip();
+		});
+		subsizer->Add(key_grid, wxSizerFlags(7).Expand());
 
 		subsizer->Add(newd wxStaticText(this, wxID_ANY, "Action ID"));
 		action_id_field = newd wxSpinCtrl(this, wxID_ANY, i2ws(edit_item->getActionID()), wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 0xFFFF, edit_item->getActionID());
@@ -133,9 +175,51 @@ OldPropertiesWindow::OldPropertiesWindow(wxWindow* win_parent, const Map* map, c
 		subsizer->Add(newd wxStaticText(this, wxID_ANY, "ID " + i2ws(item->getID())));
 		subsizer->Add(newd wxStaticText(this, wxID_ANY, "\"" + wxstr(item->getName()) + "\""));
 
-		subsizer->Add(newd wxStaticText(this, wxID_ANY, "Key"), wxSizerFlags(1).Center());
-		key_field = newd wxTextCtrl(this, wxID_ANY, wxstr(item->getKey()), wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE);
-		subsizer->Add(key_field, wxSizerFlags(7).Expand());
+		subsizer->Add(newd wxStaticText(this, wxID_ANY, "Labels"), wxSizerFlags(1).Center());
+		key_grid = newd wxGrid(this, wxID_ANY, wxDefaultPosition, wxSize(-1, 80));
+		key_grid->CreateGrid(0, 1);
+		key_grid->DisableDragRowSize();
+		key_grid->DisableDragColSize();
+		key_grid->SetSelectionMode(wxGrid::wxGridSelectRows);
+		key_grid->SetRowLabelSize(0);
+		key_grid->SetColLabelSize(0);
+		key_grid->EnableEditing(true);
+		key_grid->SetColSize(0, 340);
+		{
+			std::vector<std::string> existingKeys = edit_item->getLabelsAsVector();
+			key_grid->AppendRows(static_cast<int>(existingKeys.size()) + 1);
+			for (int i = 0; i < static_cast<int>(existingKeys.size()); ++i) {
+				key_grid->SetCellValue(i, 0, wxstr(existingKeys[i]));
+			}
+		}
+		key_grid->Bind(wxEVT_GRID_CELL_CHANGED, [this](wxGridEvent &evt) {
+			if (evt.GetCol() == 0) {
+				int lastRow = key_grid->GetNumberRows() - 1;
+				if (!key_grid->GetCellValue(lastRow, 0).IsEmpty()) {
+					key_grid->AppendRows(1);
+					key_grid->MakeCellVisible(key_grid->GetNumberRows() - 1, 0);
+				}
+			}
+			evt.Skip();
+		});
+		key_grid->Bind(wxEVT_GRID_CELL_LEFT_CLICK, [this](wxGridEvent &evt) {
+			key_grid->SetGridCursor(evt.GetRow(), evt.GetCol());
+			key_grid->EnableCellEditControl();
+			evt.Skip();
+		});
+		key_grid->Bind(wxEVT_KEY_DOWN, [this](wxKeyEvent &evt) {
+			if (evt.GetKeyCode() == WXK_DELETE && !key_grid->IsCellEditControlEnabled()) {
+				wxArrayInt selected = key_grid->GetSelectedRows();
+				int row = selected.IsEmpty() ? key_grid->GetGridCursorRow() : selected[selected.GetCount() - 1];
+				if (row >= 0) {
+					if (key_grid->GetNumberRows() > 1) key_grid->DeleteRows(row, 1);
+					else key_grid->SetCellValue(0, 0, wxEmptyString);
+				}
+				return;
+			}
+			evt.Skip();
+		});
+		subsizer->Add(key_grid, wxSizerFlags(7).Expand());
 
 		subsizer->Add(newd wxStaticText(this, wxID_ANY, "Action ID"));
 		action_id_field = newd wxSpinCtrl(this, wxID_ANY, i2ws(edit_item->getActionID()), wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 0xFFFF, edit_item->getActionID());
@@ -201,9 +285,51 @@ OldPropertiesWindow::OldPropertiesWindow(wxWindow* win_parent, const Map* map, c
 
 		subsizer->Add(splash_type_field, wxSizerFlags(1).Expand());
 
-		subsizer->Add(newd wxStaticText(this, wxID_ANY, "Key"), wxSizerFlags(1).Center());
-		key_field = newd wxTextCtrl(this, wxID_ANY, wxstr(item->getKey()), wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE);
-		subsizer->Add(key_field, wxSizerFlags(7).Expand());
+		subsizer->Add(newd wxStaticText(this, wxID_ANY, "Labels"), wxSizerFlags(1).Center());
+		key_grid = newd wxGrid(this, wxID_ANY, wxDefaultPosition, wxSize(-1, 80));
+		key_grid->CreateGrid(0, 1);
+		key_grid->DisableDragRowSize();
+		key_grid->DisableDragColSize();
+		key_grid->SetSelectionMode(wxGrid::wxGridSelectRows);
+		key_grid->SetRowLabelSize(0);
+		key_grid->SetColLabelSize(0);
+		key_grid->EnableEditing(true);
+		key_grid->SetColSize(0, 340);
+		{
+			std::vector<std::string> existingKeys = edit_item->getLabelsAsVector();
+			key_grid->AppendRows(static_cast<int>(existingKeys.size()) + 1);
+			for (int i = 0; i < static_cast<int>(existingKeys.size()); ++i) {
+				key_grid->SetCellValue(i, 0, wxstr(existingKeys[i]));
+			}
+		}
+		key_grid->Bind(wxEVT_GRID_CELL_CHANGED, [this](wxGridEvent &evt) {
+			if (evt.GetCol() == 0) {
+				int lastRow = key_grid->GetNumberRows() - 1;
+				if (!key_grid->GetCellValue(lastRow, 0).IsEmpty()) {
+					key_grid->AppendRows(1);
+					key_grid->MakeCellVisible(key_grid->GetNumberRows() - 1, 0);
+				}
+			}
+			evt.Skip();
+		});
+		key_grid->Bind(wxEVT_GRID_CELL_LEFT_CLICK, [this](wxGridEvent &evt) {
+			key_grid->SetGridCursor(evt.GetRow(), evt.GetCol());
+			key_grid->EnableCellEditControl();
+			evt.Skip();
+		});
+		key_grid->Bind(wxEVT_KEY_DOWN, [this](wxKeyEvent &evt) {
+			if (evt.GetKeyCode() == WXK_DELETE && !key_grid->IsCellEditControlEnabled()) {
+				wxArrayInt selected = key_grid->GetSelectedRows();
+				int row = selected.IsEmpty() ? key_grid->GetGridCursorRow() : selected[selected.GetCount() - 1];
+				if (row >= 0) {
+					if (key_grid->GetNumberRows() > 1) key_grid->DeleteRows(row, 1);
+					else key_grid->SetCellValue(0, 0, wxEmptyString);
+				}
+				return;
+			}
+			evt.Skip();
+		});
+		subsizer->Add(key_grid, wxSizerFlags(7).Expand());
 
 		subsizer->Add(newd wxStaticText(this, wxID_ANY, "Action ID"));
 		action_id_field = newd wxSpinCtrl(this, wxID_ANY, i2ws(edit_item->getActionID()), wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 0xFFFF, edit_item->getActionID());
@@ -307,9 +433,51 @@ OldPropertiesWindow::OldPropertiesWindow(wxWindow* win_parent, const Map* map, c
 		}
 		subsizer->Add(count_field, wxSizerFlags(1).Expand());
 
-		subsizer->Add(newd wxStaticText(this, wxID_ANY, "Key"), wxSizerFlags(1).Center());
-		key_field = newd wxTextCtrl(this, wxID_ANY, wxstr(item->getKey()), wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE);
-		subsizer->Add(key_field, wxSizerFlags(7).Expand());
+		subsizer->Add(newd wxStaticText(this, wxID_ANY, "Labels"), wxSizerFlags(1).Center());
+		key_grid = newd wxGrid(this, wxID_ANY, wxDefaultPosition, wxSize(-1, 80));
+		key_grid->CreateGrid(0, 1);
+		key_grid->DisableDragRowSize();
+		key_grid->DisableDragColSize();
+		key_grid->SetSelectionMode(wxGrid::wxGridSelectRows);
+		key_grid->SetRowLabelSize(0);
+		key_grid->SetColLabelSize(0);
+		key_grid->EnableEditing(true);
+		key_grid->SetColSize(0, 340);
+		{
+			std::vector<std::string> existingKeys = edit_item->getLabelsAsVector();
+			key_grid->AppendRows(static_cast<int>(existingKeys.size()) + 1);
+			for (int i = 0; i < static_cast<int>(existingKeys.size()); ++i) {
+				key_grid->SetCellValue(i, 0, wxstr(existingKeys[i]));
+			}
+		}
+		key_grid->Bind(wxEVT_GRID_CELL_CHANGED, [this](wxGridEvent &evt) {
+			if (evt.GetCol() == 0) {
+				int lastRow = key_grid->GetNumberRows() - 1;
+				if (!key_grid->GetCellValue(lastRow, 0).IsEmpty()) {
+					key_grid->AppendRows(1);
+					key_grid->MakeCellVisible(key_grid->GetNumberRows() - 1, 0);
+				}
+			}
+			evt.Skip();
+		});
+		key_grid->Bind(wxEVT_GRID_CELL_LEFT_CLICK, [this](wxGridEvent &evt) {
+			key_grid->SetGridCursor(evt.GetRow(), evt.GetCol());
+			key_grid->EnableCellEditControl();
+			evt.Skip();
+		});
+		key_grid->Bind(wxEVT_KEY_DOWN, [this](wxKeyEvent &evt) {
+			if (evt.GetKeyCode() == WXK_DELETE && !key_grid->IsCellEditControlEnabled()) {
+				wxArrayInt selected = key_grid->GetSelectedRows();
+				int row = selected.IsEmpty() ? key_grid->GetGridCursorRow() : selected[selected.GetCount() - 1];
+				if (row >= 0) {
+					if (key_grid->GetNumberRows() > 1) key_grid->DeleteRows(row, 1);
+					else key_grid->SetCellValue(0, 0, wxEmptyString);
+				}
+				return;
+			}
+			evt.Skip();
+		});
+		subsizer->Add(key_grid, wxSizerFlags(7).Expand());
 
 		subsizer->Add(newd wxStaticText(this, wxID_ANY, "Action ID"));
 		action_id_field = newd wxSpinCtrl(this, wxID_ANY, i2ws(edit_item->getActionID()), wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 0xFFFF, edit_item->getActionID());
@@ -343,42 +511,6 @@ OldPropertiesWindow::OldPropertiesWindow(wxWindow* win_parent, const Map* map, c
 			destination_field = new PositionCtrl(this, "Destination", teleport->getX(), teleport->getY(), teleport->getZ(), map->getWidth(), map->getHeight());
 			topsizer->Add(destination_field, wxSizerFlags(0).Expand().Border(wxLEFT | wxRIGHT, 20));
 		}
-	}
-
-	// Labels
-	{
-		wxStaticBoxSizer* labels_sizer = newd wxStaticBoxSizer(wxVERTICAL, this, "Labels");
-
-		labels_grid = newd wxGrid(this, wxID_ANY, wxDefaultPosition, wxSize(-1, 200));
-		labels_grid->CreateGrid(0, 1);
-		labels_grid->DisableDragRowSize();
-		labels_grid->DisableDragColSize();
-		labels_grid->SetSelectionMode(wxGrid::wxGridSelectRows);
-		labels_grid->SetRowLabelSize(0);
-		labels_grid->SetColLabelSize(0);
-		labels_grid->EnableEditing(true);
-		labels_grid->SetColSize(0, 360);
-
-		std::vector<std::string> existing_labels = edit_item->getLabels();
-		int label_rows = static_cast<int>(existing_labels.size()) + 1;
-		labels_grid->AppendRows(label_rows);
-		for (int i = 0; i < static_cast<int>(existing_labels.size()); ++i) {
-			labels_grid->SetCellValue(i, 0, wxstr(existing_labels[i]));
-		}
-
-		labels_grid->Bind(wxEVT_GRID_CELL_CHANGED, [this](wxGridEvent &evt) {
-			if (evt.GetCol() == 0) {
-				int lastRow = labels_grid->GetNumberRows() - 1;
-				if (!labels_grid->GetCellValue(lastRow, 0).IsEmpty()) {
-					labels_grid->AppendRows(1);
-					labels_grid->MakeCellVisible(labels_grid->GetNumberRows() - 1, 0);
-				}
-			}
-			evt.Skip();
-		});
-
-		labels_sizer->Add(labels_grid, wxSizerFlags(1).Expand());
-		topsizer->Add(labels_sizer, wxSizerFlags(0).Expand().Border(wxLEFT | wxRIGHT, 20));
 	}
 
 	// Others attributes
@@ -660,16 +792,15 @@ void OldPropertiesWindow::OnClickOK(wxCommandEvent &WXUNUSED(event)) {
 			}
 		}
 
-		if (edit_item && key_field) {
-			std::string key = nstr(key_field->GetValue());
-			if (key.length() >= 0x2000) {
-				g_gui.PopupDialog(this, "Error", "Key is longer than 65535 characters, this is not supported by OpenTibia. Reduce the length of the text.", wxOK);
-				return;
+		if (edit_item && key_grid) {
+			std::vector<std::string> keys;
+			for (int i = 0; i < key_grid->GetNumberRows(); ++i) {
+				std::string val = nstr(key_grid->GetCellValue(i, 0));
+				if (!val.empty()) {
+					keys.push_back(val);
+				}
 			}
-			std::regex pattern("[ .%\\-]+");
-			std::string replacement = "-";
-			std::string result = std::regex_replace(key, pattern, replacement);
-			edit_item->setKey(result);
+			edit_item->setLabelsFromVector(keys);
 		}
 
 		if (edit_item->canHoldText() || edit_item->canHoldDescription()) {
@@ -765,18 +896,6 @@ void OldPropertiesWindow::OnClickOK(wxCommandEvent &WXUNUSED(event)) {
 
 		if (aid_changed) {
 			edit_item->setActionID(new_aid);
-		}
-
-		// Save labels
-		if (labels_grid) {
-			std::vector<std::string> labels;
-			for (int i = 0; i < labels_grid->GetNumberRows(); ++i) {
-				std::string val = nstr(labels_grid->GetCellValue(i, 0));
-				if (!val.empty()) {
-					labels.push_back(val);
-				}
-			}
-			edit_item->setLabels(labels);
 		}
 	} else if (edit_monster) {
 		const auto new_spawn_monster_time = count_field->GetValue();

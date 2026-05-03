@@ -78,10 +78,13 @@ bool Item::readItemAttribute_OTBM(const IOMap &maphandle, OTBM_ItemAttribute att
 	switch (attr) {
 		case OTBM_ATTR_KEY: {
 			std::string key;
-			if (!stream->getString(key)) {
-				return false;
-			}
-			setKey(key);
+			if (!stream->getString(key)) return false;
+
+			std::vector<std::string> keys;
+			for (std::istringstream iss(key); std::getline(iss, key); ) // split each line by \n into vector of strings
+				keys.push_back(key);
+
+			setLabelsFromVector(keys);
 			break;
 		}
 		case OTBM_ATTR_COUNT: {
@@ -194,10 +197,13 @@ void Item::serializeItemAttributes_OTBM(const IOMap &maphandle, NodeFileWriteHan
 			stream.addU16(getSubtype());
 		}
 
-		const std::string &key = getKey();
-		if (!key.empty()) {
+		const auto keys = getLabelsAsVector();
+		auto joined = keys | std::views::join_with('\n');
+		std::string result(joined.begin(), joined.end());
+		const auto key = getLabelsAsVector();
+		if (!keys.empty()) {
 			stream.addU8(OTBM_ATTR_KEY);
-			stream.addString(key);
+			stream.addString(result);
 		}
 
 		const auto actionId = getActionID();
