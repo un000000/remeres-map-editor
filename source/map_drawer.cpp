@@ -1410,7 +1410,7 @@ void MapDrawer::WriteTooltip(const Item* item, MapTooltip &tooltip) {
 		tooltip.addEntry("uid: ", std::to_string(unique));
 	}
 	if (!key.empty()) {
-		stream << "key: " << key << "\n";
+		tooltip.addEntry("key: ",key);
 	}
 	if (!text.empty()) {
 		tooltip.addEntry("text: ", text);
@@ -1421,11 +1421,9 @@ void MapDrawer::WriteTooltip(const Waypoint* waypoint, MapTooltip &tooltip) {
 	tooltip.addEntry("wp: ", waypoint->name);
 }
 
-void MapDrawer::WriteTooltipZone(const std::string zoneName, unsigned int zoneId, std::ostringstream &stream) {
-	if (stream.tellp() > 0) {
-		stream << "\n";
-	}
-	stream << "zone: " << zoneName << ":" << zoneId << "\n";
+void MapDrawer::WriteTooltipZone(const std::string zoneName, unsigned int zoneId, MapTooltip &tooltip) {
+	auto zoneSuffix = zoneName + ":" + std::to_string(zoneId);
+	tooltip.addEntry("zone: ", zoneSuffix);
 }
 
 void MapDrawer::DrawTile(TileLocation* location) {
@@ -1576,16 +1574,6 @@ void MapDrawer::DrawTile(TileLocation* location) {
 	}
 	const auto &pos = tile->getPosition();
 
-	auto &zones = canvas->editor.getMap().zones;
-	for (auto zone : tile->zones) {
-		if (ZoneOccupiedPositions::hasCenter(zone)) {
-			if (ZoneOccupiedPositions::getCenter(zone) == tile->getPosition()) {
-				auto name = zones.getZoneName(zone);
-				WriteTooltipZone(name, zone, tooltip);
-			}
-		}
-	}
-
 	if (show_tooltips && position.z == floor) {
 		uint8_t tr = 255;
 		uint8_t tg = 255;
@@ -1603,6 +1591,16 @@ void MapDrawer::DrawTile(TileLocation* location) {
 
 		if (tile->hasGround()) {
 			WriteTooltip(tile->ground, tip);
+		}
+
+		auto &zones = canvas->editor.getMap().zones;
+		for (auto zone : tile->zones) {
+			if (ZoneOccupiedPositions::hasCenter(zone)) {
+				if (ZoneOccupiedPositions::getCenter(zone) == tile->getPosition()) {
+					auto name = zones.getZoneName(zone);
+					WriteTooltipZone(name, zone, tip);
+				}
+			}
 		}
 
 		if (!tile->items.empty()) {

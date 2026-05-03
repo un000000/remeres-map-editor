@@ -237,6 +237,7 @@ protected:
 	void DrawLight() const;
 	void WriteTooltip(const Item* item, MapTooltip &tooltip);
 	void WriteTooltip(const Waypoint* waypoint, MapTooltip &tooltip);
+	void WriteTooltipZone(const std::string zoneName, unsigned int zoneId, MapTooltip &tooltip);
 	MapTooltip &MakeTooltip(int map_x, int map_y, int map_z, uint8_t r = 255, uint8_t g = 255, uint8_t b = 255);
 	void AddLight(TileLocation* location);
 

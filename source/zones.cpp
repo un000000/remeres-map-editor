@@ -40,7 +40,7 @@ bool Zones::addZone(const std::string &name) {
 	return addZone(name, generateID());
 }
 
-bool Zones::hasZone(const std::string name) {
+bool Zones::hasZone(const std::string &name) {
 	std::string lower_name = as_lower_str(name);
 	for (const auto &zone : zones) {
 		if (as_lower_str(zone.first) == lower_name) {

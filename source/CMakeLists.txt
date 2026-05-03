@@ -212,6 +212,7 @@ target_sources(
           iominimap.cpp
           item_attributes.cpp
           item.cpp
+          item_filter.cpp
           items.cpp
           live_action.cpp
           live_client.cpp
