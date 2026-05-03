@@ -17,6 +17,8 @@
 
 #include "main.h"
 
+#include <sstream>
+
 #include "brush.h"
 #include "graphics.h"
 #include "gui.h"
@@ -285,6 +287,36 @@ void Item::setText(const std::string &str) {
 
 void Item::setDescription(const std::string &str) {
 	setAttribute("desc", str);
+}
+
+void Item::setLabels(const std::vector<std::string> &labels) {
+	// Filter out empty strings before storing
+	std::string joined;
+	for (const auto &label : labels) {
+		if (!label.empty()) {
+			if (!joined.empty()) joined += '\n';
+			joined += label;
+		}
+	}
+	if (joined.empty()) {
+		eraseAttribute("labels");
+	} else {
+		setAttribute("labels", joined);
+	}
+}
+
+std::vector<std::string> Item::getLabels() const {
+	const std::string* raw = getStringAttribute("labels");
+	std::vector<std::string> result;
+	if (!raw || raw->empty()) {
+		return result;
+	}
+	std::stringstream ss(*raw);
+	std::string token;
+	while (std::getline(ss, token)) {
+		result.push_back(token);
+	}
+	return result;
 }
 
 double Item::getWeight() {

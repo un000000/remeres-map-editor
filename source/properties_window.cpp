@@ -283,6 +283,68 @@ wxWindow* PropertiesWindow::createContainerPanel(wxWindow* parent) {
 	return panel;
 }
 
+wxWindow* PropertiesWindow::createLabelsPanel(wxWindow* parent) {
+	wxPanel* panel = newd wxPanel(parent, ITEM_PROPERTIES_LABELS_TAB);
+	wxSizer* topSizer = newd wxBoxSizer(wxVERTICAL);
+
+	labelsGrid = newd wxGrid(panel, wxID_ANY, wxDefaultPosition, wxSize(-1, 160));
+	labelsGrid->CreateGrid(0, 1);
+	labelsGrid->DisableDragRowSize();
+	labelsGrid->DisableDragColSize();
+	labelsGrid->SetSelectionMode(wxGrid::wxGridSelectRows);
+	labelsGrid->SetRowLabelSize(0);
+	labelsGrid->EnableEditing(true);
+	labelsGrid->SetColLabelValue(0, "Label");
+	labelsGrid->SetColSize(0, 580);
+
+	// Populate existing labels
+	std::vector<std::string> labels = edit_item->getLabels();
+	// Always add one extra empty row at the end
+	int rows = static_cast<int>(labels.size()) + 1;
+	labelsGrid->AppendRows(rows);
+	for (int i = 0; i < static_cast<int>(labels.size()); ++i) {
+		labelsGrid->SetCellValue(i, 0, wxstr(labels[i]));
+	}
+
+	topSizer->Add(labelsGrid, wxSizerFlags(1).Expand().DoubleBorder());
+
+	wxStaticText* hint = newd wxStaticText(panel, wxID_ANY,
+		"Type or paste a label in each row. A new empty row is added automatically.");
+	topSizer->Add(hint, wxSizerFlags(0).Border(wxLEFT | wxBOTTOM, 10));
+
+	panel->SetSizer(topSizer);
+	return panel;
+}
+
+void PropertiesWindow::saveLabelsPanel() {
+	std::vector<std::string> labels;
+	for (int i = 0; i < labelsGrid->GetNumberRows(); ++i) {
+		std::string val = nstr(labelsGrid->GetCellValue(i, 0));
+		if (!val.empty()) {
+			labels.push_back(val);
+		}
+	}
+	edit_item->setLabels(labels);
+}
+
+void PropertiesWindow::onLabelsCellChanged(wxGridEvent &evt) {
+	if (evt.GetCol() != 0) {
+		evt.Skip();
+		return;
+	}
+
+	int lastRow = labelsGrid->GetNumberRows() - 1;
+	wxString lastVal = labelsGrid->GetCellValue(lastRow, 0);
+
+	// If the last row now has content, append a new empty row
+	if (!lastVal.IsEmpty()) {
+		labelsGrid->AppendRows(1);
+		labelsGrid->MakeCellVisible(labelsGrid->GetNumberRows() - 1, 0);
+	}
+
+	evt.Skip();
+}
+
 wxWindow* PropertiesWindow::createAttributesPanel(wxWindow* parent) {
 	wxPanel* panel = newd wxPanel(parent, wxID_ANY);
 	wxSizer* topSizer = newd wxBoxSizer(wxVERTICAL);

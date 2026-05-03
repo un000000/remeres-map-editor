@@ -1415,6 +1415,12 @@ void MapDrawer::WriteTooltip(const Item* item, MapTooltip &tooltip) {
 	if (!text.empty()) {
 		tooltip.addEntry("text: ", text);
 	}
+
+	auto i = 1;
+	for (auto a : item->getLabels()) {
+		tooltip.addEntry("label "+std::to_string(i) + ":", text);
+		i++;
+	}
 }
 
 void MapDrawer::WriteTooltip(const Waypoint* waypoint, MapTooltip &tooltip) {

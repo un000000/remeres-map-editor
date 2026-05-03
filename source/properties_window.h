@@ -66,6 +66,12 @@ protected:
 	wxWindow* createContainerPanel(wxWindow* parent);
 	void saveContainerPanel();
 
+	// Labels pane
+	wxGrid* labelsGrid;
+	wxWindow* createLabelsPanel(wxWindow* parent);
+	void saveLabelsPanel();
+	void onLabelsCellChanged(wxGridEvent &evt);
+
 	// Advanced pane
 	wxGrid* attributesGrid;
 	wxWindow* createAttributesPanel(wxWindow* parent);

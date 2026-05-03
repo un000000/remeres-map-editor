@@ -54,6 +54,7 @@ protected:
 	wxChoice* splash_type_field;
 	wxTextCtrl* text_field;
 	wxTextCtrl* description_field;
+	wxGrid* labels_grid = nullptr;
 	std::vector<ContainerItemButton*> container_items;
 
 	friend class ContainerItemButton;

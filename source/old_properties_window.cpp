@@ -345,6 +345,42 @@ OldPropertiesWindow::OldPropertiesWindow(wxWindow* win_parent, const Map* map, c
 		}
 	}
 
+	// Labels
+	{
+		wxStaticBoxSizer* labels_sizer = newd wxStaticBoxSizer(wxVERTICAL, this, "Labels");
+
+		labels_grid = newd wxGrid(this, wxID_ANY, wxDefaultPosition, wxSize(-1, 200));
+		labels_grid->CreateGrid(0, 1);
+		labels_grid->DisableDragRowSize();
+		labels_grid->DisableDragColSize();
+		labels_grid->SetSelectionMode(wxGrid::wxGridSelectRows);
+		labels_grid->SetRowLabelSize(0);
+		labels_grid->SetColLabelSize(0);
+		labels_grid->EnableEditing(true);
+		labels_grid->SetColSize(0, 360);
+
+		std::vector<std::string> existing_labels = edit_item->getLabels();
+		int label_rows = static_cast<int>(existing_labels.size()) + 1;
+		labels_grid->AppendRows(label_rows);
+		for (int i = 0; i < static_cast<int>(existing_labels.size()); ++i) {
+			labels_grid->SetCellValue(i, 0, wxstr(existing_labels[i]));
+		}
+
+		labels_grid->Bind(wxEVT_GRID_CELL_CHANGED, [this](wxGridEvent &evt) {
+			if (evt.GetCol() == 0) {
+				int lastRow = labels_grid->GetNumberRows() - 1;
+				if (!labels_grid->GetCellValue(lastRow, 0).IsEmpty()) {
+					labels_grid->AppendRows(1);
+					labels_grid->MakeCellVisible(labels_grid->GetNumberRows() - 1, 0);
+				}
+			}
+			evt.Skip();
+		});
+
+		labels_sizer->Add(labels_grid, wxSizerFlags(1).Expand());
+		topsizer->Add(labels_sizer, wxSizerFlags(0).Expand().Border(wxLEFT | wxRIGHT, 20));
+	}
+
 	// Others attributes
 	const ItemType &type = g_items.getItemType(edit_item->getID());
 	wxStaticBoxSizer* others_sizer = newd wxStaticBoxSizer(wxVERTICAL, this, "Others");
@@ -729,6 +765,18 @@ void OldPropertiesWindow::OnClickOK(wxCommandEvent &WXUNUSED(event)) {
 
 		if (aid_changed) {
 			edit_item->setActionID(new_aid);
+		}
+
+		// Save labels
+		if (labels_grid) {
+			std::vector<std::string> labels;
+			for (int i = 0; i < labels_grid->GetNumberRows(); ++i) {
+				std::string val = nstr(labels_grid->GetCellValue(i, 0));
+				if (!val.empty()) {
+					labels.push_back(val);
+				}
+			}
+			edit_item->setLabels(labels);
 		}
 	} else if (edit_monster) {
 		const auto new_spawn_monster_time = count_field->GetValue();

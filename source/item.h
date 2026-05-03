@@ -368,6 +368,10 @@ public:
 	void setDescription(const std::string &str);
 	std::string getDescription() const;
 
+	// Labels (list of arbitrary strings, stored joined by '\n' under key "labels")
+	void setLabels(const std::vector<std::string> &labels);
+	std::vector<std::string> getLabels() const;
+
 	void animate();
 	int getFrame() const {
 		return frame;
