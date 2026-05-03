@@ -175,6 +175,14 @@ bool PaletteWindow::CanSelectHouseBrush(PalettePanel* palette, const Brush* what
 	return true;
 }
 
+bool PaletteWindow::CanSelectZonesBrush(PalettePanel* palette, const Brush* whatBrush) {
+	if (!palette || !whatBrush->isZone()) {
+		return false;
+	}
+
+	return true;
+}
+
 bool PaletteWindow::CanSelectBrush(PalettePanel* palette, const Brush* whatBrush) {
 	if (!palette) {
 		return false;
@@ -331,6 +339,12 @@ bool PaletteWindow::OnSelectBrush(const Brush* whatBrush, PaletteType primary) {
 	if (CanSelectHouseBrush(housePalette, whatBrush)) {
 		housePalette->SelectBrush(whatBrush);
 		SelectPage(TILESET_HOUSE);
+		return true;
+	}
+
+	if (CanSelectZonesBrush(zonesPalette, whatBrush)) {
+		zonesPalette->SelectBrush(whatBrush);
+		SelectPage(TILESET_ZONES);
 		return true;
 	}
 

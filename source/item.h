@@ -362,6 +362,9 @@ public:
 	void setActionID(uint16_t n);
 	uint16_t getActionID() const;
 
+	void setKey(const std::string &str);
+	std::string getKey() const;
+
 	void setText(const std::string &str);
 	std::string getText() const;
 
@@ -418,6 +421,14 @@ inline uint16_t Item::getActionID() const {
 		return *a;
 	}
 	return 0;
+}
+
+inline std::string Item::getKey() const {
+	const std::string* a = getStringAttribute("keyValue123");
+	if (a) {
+		return *a;
+	}
+	return "";
 }
 
 inline std::string Item::getText() const {

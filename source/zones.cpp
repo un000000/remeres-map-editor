@@ -41,8 +41,13 @@ bool Zones::addZone(std::string name) {
 }
 
 bool Zones::hasZone(std::string name) {
-	to_lower_str(name);
-	return zones.find(name) != zones.end();
+	std::string lower_name = as_lower_str(name);
+	for (const auto &zone : zones) {
+		if (as_lower_str(zone.first) == lower_name) {
+			return true;
+		}
+	}
+	return false;
 }
 
 bool Zones::hasZone(unsigned int id) {
@@ -50,7 +55,6 @@ bool Zones::hasZone(unsigned int id) {
 }
 
 void Zones::removeZone(std::string name) {
-	to_lower_str(name);
 	if (!hasZone(name)) {
 		return;
 	}

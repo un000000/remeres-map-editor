@@ -96,6 +96,7 @@ EVT_MENU(MAP_POPUP_MENU_SELECT_SPAWN_BRUSH, MapCanvas::OnSelectSpawnBrush)
 EVT_MENU(MAP_POPUP_MENU_SELECT_NPC_BRUSH, MapCanvas::OnSelectNpcBrush)
 EVT_MENU(MAP_POPUP_MENU_SELECT_SPAWN_NPC_BRUSH, MapCanvas::OnSelectSpawnNpcBrush)
 EVT_MENU(MAP_POPUP_MENU_SELECT_HOUSE_BRUSH, MapCanvas::OnSelectHouseBrush)
+EVT_MENU(MAP_POPUP_MENU_SELECT_ZONE_BRUSH, MapCanvas::OnSelectZoneBrush)
 EVT_MENU(MAP_POPUP_MENU_MOVE_TO_TILESET, MapCanvas::OnSelectMoveTo)
 // ----
 EVT_MENU(MAP_POPUP_MENU_PROPERTIES, MapCanvas::OnProperties)
@@ -722,8 +723,8 @@ void MapCanvas::OnMouseActionClick(wxMouseEvent &event) {
 					}
 				} else if (event.ControlDown()) {
 					Tile* tile = editor.getMap().getTile(mouse_map_x, mouse_map_y, floor);
-					const auto monster = tile->getTopMonster();
 					if (tile) {
+						const auto monster = tile->getTopMonster();
 						// Show monster spawn
 						if (tile->spawnMonster && g_settings.getInteger(Config::SHOW_SPAWNS_MONSTER)) {
 							selection.start(); // Start selection session
@@ -2281,6 +2282,21 @@ void MapCanvas::OnSelectHouseBrush(wxCommandEvent &WXUNUSED(event)) {
 	}
 }
 
+void MapCanvas::OnSelectZoneBrush(wxCommandEvent &WXUNUSED(event)) {
+	Tile* tile = editor.getSelection().getSelectedTile();
+	if (!tile) {
+		return;
+	}
+
+	if (tile->hasZone()) {
+		auto zoneId = *tile->zones.begin();
+		if (zoneId) {
+			g_gui.zone_brush->setZone(zoneId);
+			g_gui.SelectBrush(g_gui.zone_brush, TILESET_ZONES);
+		}
+	}
+}
+
 void MapCanvas::OnSelectMonsterBrush(wxCommandEvent &WXUNUSED(event)) {
 	Tile* tile = editor.getSelection().getSelectedTile();
 	if (!tile) {
@@ -2574,7 +2590,7 @@ void MapPopupMenu::Update() {
 				AppendSeparator();
 			}
 
-			if (topSelectedItem || topMonster || topSelectedMonster || topNpc || topItem) {
+			if (topSelectedItem || topSpawnMonster || topMonster || topSelectedMonster || topNpc || topItem) {
 				Teleport* teleport = dynamic_cast<Teleport*>(topSelectedItem);
 				if (topSelectedItem && (topSelectedItem->isBrushDoor() || topSelectedItem->isRoteable() || teleport)) {
 
@@ -2601,7 +2617,7 @@ void MapPopupMenu::Update() {
 					}
 				}
 
-				if (topMonster || topSelectedMonster) {
+				if (topMonster || topSelectedMonster || topSpawnMonster) {
 					Append(MAP_POPUP_MENU_SELECT_MONSTER_BRUSH, "Select Monster", "Uses the current monster as a monster brush");
 				}
 
@@ -2651,10 +2667,13 @@ void MapPopupMenu::Update() {
 					Append(MAP_POPUP_MENU_SELECT_HOUSE_BRUSH, "Select House", "Draw with the house on this tile.");
 				}
 
+				if (tile->hasZone()) {
+					Append(MAP_POPUP_MENU_SELECT_ZONE_BRUSH, "Select Zone", "Uses the current zone as a zone brush");
+				}
+
 				AppendSeparator();
 				Append(MAP_POPUP_MENU_PROPERTIES, "&Properties", "Properties for the current object");
 			} else {
-
 				if (topMonster) {
 					Append(MAP_POPUP_MENU_SELECT_MONSTER_BRUSH, "Select Monster", "Uses the current monster as a monster brush");
 				}
@@ -2681,6 +2700,10 @@ void MapPopupMenu::Update() {
 
 				if (tile->isHouseTile()) {
 					Append(MAP_POPUP_MENU_SELECT_HOUSE_BRUSH, "Select House", "Draw with the house on this tile.");
+				}
+
+				if (tile->hasZone()) {
+					Append(MAP_POPUP_MENU_SELECT_ZONE_BRUSH, "Select Zone", "Uses the current zone as a zone brush");
 				}
 
 				if (tile->hasGround() || topMonster || topSpawnMonster || topNpc || topSpawnNpc) {

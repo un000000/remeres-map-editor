@@ -44,6 +44,7 @@
 #include "waypoint_brush.h"
 #include "zone_brush.h"
 #include "light_drawer.h"
+#include "zone_occupied_positions.cpp"
 
 DrawingOptions::DrawingOptions() {
 	SetDefault();
@@ -1448,8 +1449,9 @@ void MapDrawer::WriteTooltip(const Item* item, std::ostringstream &stream) {
 
 	const uint16_t unique = item->getUniqueID();
 	const uint16_t action = item->getActionID();
+	const std::string &key = item->getKey();
 	const std::string &text = item->getText();
-	if (unique == 0 && action == 0 && text.empty()) {
+	if (unique == 0 && action == 0 && key.empty() && text.empty()) {
 		return;
 	}
 
@@ -1465,6 +1467,9 @@ void MapDrawer::WriteTooltip(const Item* item, std::ostringstream &stream) {
 	if (unique > 0) {
 		stream << "uid: " << unique << "\n";
 	}
+	if (!key.empty()) {
+		stream << "key: " << key << "\n";
+	}
 	if (!text.empty()) {
 		stream << "text: " << text << "\n";
 	}
@@ -1475,6 +1480,13 @@ void MapDrawer::WriteTooltip(const Waypoint* waypoint, std::ostringstream &strea
 		stream << "\n";
 	}
 	stream << "wp: " << waypoint->name << "\n";
+}
+
+void MapDrawer::WriteTooltipZone(const std::string zoneName, unsigned int zoneId, std::ostringstream &stream) {
+	if (stream.tellp() > 0) {
+		stream << "\n";
+	}
+	stream << "zone: " << zoneName << ":" << zoneId << "\n";
 }
 
 void MapDrawer::DrawTile(TileLocation* location) {
@@ -1631,6 +1643,17 @@ void MapDrawer::DrawTile(TileLocation* location) {
 
 	if (!hidden && options.show_npcs && tile->npc) {
 		BlitCreature(draw_x, draw_y, tile->npc);
+	}
+	const auto &pos = tile->getPosition();
+
+	auto &zones = canvas->editor.getMap().zones;
+	for (auto zone : tile->zones) {
+		if (ZoneOccupiedPositions::hasCenter(zone)) {
+			if (ZoneOccupiedPositions::getCenter(zone) == tile->getPosition()) {
+				auto name = zones.getZoneName(zone);
+				WriteTooltipZone(name, zone, tooltip);
+			}
+		}
 	}
 
 	if (show_tooltips) {

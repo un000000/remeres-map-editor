@@ -175,8 +175,8 @@ void ZonesPalettePanel::OnEditZoneLabel(wxListEvent &event) {
 				g_gui.SetStatusText("There already is a zone with this name.");
 				event.Veto();
 				if (oldName == "") {
-					map->zones.removeZone(oldName);
-					g_gui.RefreshPalettes();
+					// map->zones.removeZone(oldName);
+					// g_gui.RefreshPalettes();
 				}
 			} else {
 				map->zones.removeZone(oldName);
@@ -190,9 +190,7 @@ void ZonesPalettePanel::OnEditZoneLabel(wxListEvent &event) {
 		}
 	}
 
-	if (event.IsAllowed()) {
-		g_gui.EnableHotkeys();
-	}
+	g_gui.EnableHotkeys();
 }
 
 void ZonesPalettePanel::OnClickAddZone(wxCommandEvent &event) {
@@ -224,4 +222,6 @@ void ZonesPalettePanel::OnClickRemoveZone(wxCommandEvent &event) {
 		zone_list->DeleteItem(item);
 		refresh_timer.Start(300, true);
 	}
+
+	g_gui.EnableHotkeys();
 }
