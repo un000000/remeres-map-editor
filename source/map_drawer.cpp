@@ -1397,7 +1397,7 @@ void MapDrawer::WriteTooltip(const Item* item, MapTooltip &tooltip) {
 	const uint16_t action = item->getActionID();
 	const std::string &key = item->getKey();
 	const std::string &text = item->getText();
-	if (unique == 0 && action == 0 && key.empty() && text.empty()) {
+	if (unique == 0 && action == 0 && key.empty() && text.empty() && item->getLabels().empty()) {
 		return;
 	}
 
@@ -1416,10 +1416,15 @@ void MapDrawer::WriteTooltip(const Item* item, MapTooltip &tooltip) {
 		tooltip.addEntry("text: ", text);
 	}
 
-	auto i = 1;
-	for (auto a : item->getLabels()) {
-		tooltip.addEntry("label "+std::to_string(i) + ":", text);
-		i++;
+	auto labels = item->getLabels();
+	if (!labels.empty()) {
+		auto i = 1;
+		std::string labelsString = "";
+		for (const auto label : labels) {
+			labelsString = labelsString + "\n\t" + label;
+			i++;
+		}
+		tooltip.addEntry( "labels", labelsString);
 	}
 }
 
