@@ -33,31 +33,31 @@ protected:
 	NpcMap npcMap;
 
 public:
-	typedef NpcMap::iterator iterator;
-	typedef NpcMap::const_iterator const_iterator;
+    typedef NpcMap::iterator iterator;
+    typedef NpcMap::const_iterator const_iterator;
 
-	NpcDatabase();
-	~NpcDatabase();
+    NpcDatabase();
+    ~NpcDatabase();
 
-	void clear();
+    void clear();
 
-	NpcType* operator[](const std::string &name);
-	NpcType* addMissingNpcType(const std::string &name);
-	NpcType* addNpcType(const std::string &name, const Outfit &outfit);
+    NpcType* operator[](const std::string &name);
+    NpcType* addMissingNpcType(const std::string &name);
+    NpcType* addNpcType(const std::string &name, const Outfit &outfit);
 
-	bool hasMissing() const;
-	iterator begin() noexcept {
-		return npcMap.begin();
-	}
-	iterator end() noexcept {
-		return npcMap.end();
-	}
+    bool hasMissing() const;
+    iterator begin() noexcept {
+        return npcMap.begin();
+    }
+    iterator end() noexcept {
+        return npcMap.end();
+    }
 
-	bool importXMLFromOT(const FileName &filename, wxString &error, wxArrayString &warnings);
-	bool loadFromLuaDir(const wxString &directory, wxString &error, wxArrayString &warnings);
+    bool importXMLFromOT(const FileName &filename, wxString &error, wxArrayString &warnings);
+    bool loadFromXmlFile(const FileName &filename, wxString &error, wxArrayString &warnings);
 
-	bool saveToXML(const FileName &filename);
-	wxArrayString getMissingNpcNames() const;
+    bool saveToXML(const FileName &filename);
+    wxArrayString getMissingNpcNames() const;
 };
 
 class NpcType {

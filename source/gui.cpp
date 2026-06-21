@@ -321,36 +321,36 @@ bool GUI::LoadDataFiles(wxString &error, wxArrayString &warnings) {
 	}
 
 	{
-		std::string monstersLuaDir = g_settings.getString(Config::MONSTERS_LUA_DIRECTORY);
-		if (monstersLuaDir.empty()) {
-			warnings.push_back("Monsters Lua Directory is not configured. Set it in Edit > Preferences.");
-			spdlog::warn("[GUI::LoadDataFiles] Monsters Lua Directory is not configured.");
+		std::string monstersXmlPath = g_settings.getString(Config::MONSTERS_LUA_DIRECTORY);
+		if (monstersXmlPath.empty()) {
+			warnings.push_back("Monsters XML file is not configured. Set it in Edit > Preferences.");
+			spdlog::warn("[GUI::LoadDataFiles] Monsters XML file is not configured.");
 		} else {
-			g_gui.SetLoadDone(47, "Loading Canary monster Lua files...");
-			wxString luaErr;
-			wxArrayString luaWarn;
-			if (!g_monsters.loadFromLuaDir(wxString(monstersLuaDir), luaErr, luaWarn)) {
-				warnings.push_back("Error loading Canary monster Lua files: " + luaErr);
+			g_gui.SetLoadDone(47, "Loading monsters.xml file...");
+			wxString xmlErr;
+			wxArrayString xmlWarn;
+			if (!g_monsters.loadFromXmlFile(FileName(wxString(monstersXmlPath)), xmlErr, xmlWarn)) {
+				warnings.push_back("Error loading monsters.xml file: " + xmlErr);
 			}
-			for (const auto &w : luaWarn) {
+			for (const auto &w : xmlWarn) {
 				warnings.push_back(w);
 			}
 		}
 	}
 
 	{
-		std::string npcsLuaDir = g_settings.getString(Config::NPCS_LUA_DIRECTORY);
-		if (npcsLuaDir.empty()) {
-			warnings.push_back("NPCs Lua Directory is not configured. Set it in Edit > Preferences.");
-			spdlog::warn("[GUI::LoadDataFiles] NPCs Lua Directory is not configured.");
+		std::string npcsXmlPath = g_settings.getString(Config::NPCS_LUA_DIRECTORY);
+		if (npcsXmlPath.empty()) {
+			warnings.push_back("NPCs XML file is not configured. Set it in Edit > Preferences.");
+			spdlog::warn("[GUI::LoadDataFiles] NPCs XML file is not configured.");
 		} else {
-			g_gui.SetLoadDone(48, "Loading Canary NPC Lua files...");
-			wxString luaErr;
-			wxArrayString luaWarn;
-			if (!g_npcs.loadFromLuaDir(wxString(npcsLuaDir), luaErr, luaWarn)) {
-				warnings.push_back("Error loading Canary NPC Lua files: " + luaErr);
+			g_gui.SetLoadDone(48, "Loading npcs.xml file...");
+			wxString xmlErr;
+			wxArrayString xmlWarn;
+			if (!g_npcs.loadFromXmlFile(FileName(wxString(npcsXmlPath)), xmlErr, xmlWarn)) {
+				warnings.push_back("Error loading npcs.xml file: " + xmlErr);
 			}
-			for (const auto &w : luaWarn) {
+			for (const auto &w : xmlWarn) {
 				warnings.push_back(w);
 			}
 		}

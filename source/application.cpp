@@ -607,23 +607,23 @@ bool MainFrame::DoQueryImportCreatures() {
 	}
 
 	if (g_monsters.hasMissing() && !monstersLuaDir.empty()) {
-		wxString luaErr;
-		wxArrayString luaWarn;
-		if (!g_monsters.loadFromLuaDir(wxString(monstersLuaDir), luaErr, luaWarn)) {
-			wxLogWarning("%s", luaErr);
+		wxString xmlErr;
+		wxArrayString xmlWarn;
+		if (!g_monsters.loadFromXmlFile(FileName(wxString(monstersLuaDir)), xmlErr, xmlWarn)) {
+			wxLogWarning("%s", xmlErr);
 		}
-		for (const auto &warn : luaWarn) {
+		for (const auto &warn : xmlWarn) {
 			wxLogWarning("%s", warn);
 		}
 	}
 
 	if (g_npcs.hasMissing() && !npcsLuaDir.empty()) {
-		wxString luaErr;
-		wxArrayString luaWarn;
-		if (!g_npcs.loadFromLuaDir(wxString(npcsLuaDir), luaErr, luaWarn)) {
-			wxLogWarning("%s", luaErr);
+		wxString xmlErr;
+		wxArrayString xmlWarn;
+		if (!g_npcs.loadFromXmlFile(FileName(wxString(npcsLuaDir)), xmlErr, xmlWarn)) {
+			wxLogWarning("%s", xmlErr);
 		}
-		for (const auto &warn : luaWarn) {
+		for (const auto &warn : xmlWarn) {
 			wxLogWarning("%s", warn);
 		}
 	}

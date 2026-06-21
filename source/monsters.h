@@ -33,31 +33,31 @@ protected:
 	MonsterMap monster_map;
 
 public:
-	typedef MonsterMap::iterator iterator;
-	typedef MonsterMap::const_iterator const_iterator;
+    typedef MonsterMap::iterator iterator;
+    typedef MonsterMap::const_iterator const_iterator;
 
-	MonsterDatabase();
-	~MonsterDatabase();
+    MonsterDatabase();
+    ~MonsterDatabase();
 
-	void clear();
+    void clear();
 
-	MonsterType* operator[](const std::string &name);
-	MonsterType* addMissingMonsterType(const std::string &name);
-	MonsterType* addMonsterType(const std::string &name, const Outfit &outfit);
+    MonsterType* operator[](const std::string &name);
+    MonsterType* addMissingMonsterType(const std::string &name);
+    MonsterType* addMonsterType(const std::string &name, const Outfit &outfit);
 
-	bool hasMissing() const;
-	iterator begin() noexcept {
-		return monster_map.begin();
-	}
-	iterator end() noexcept {
-		return monster_map.end();
-	}
+    bool hasMissing() const;
+    iterator begin() noexcept {
+        return monster_map.begin();
+    }
+    iterator end() noexcept {
+        return monster_map.end();
+    }
 
-	bool importXMLFromOT(const FileName &filename, wxString &error, wxArrayString &warnings);
-	bool loadFromLuaDir(const wxString &directory, wxString &error, wxArrayString &warnings);
+    bool importXMLFromOT(const FileName &filename, wxString &error, wxArrayString &warnings);
+    bool loadFromXmlFile(const FileName &filename, wxString &error, wxArrayString &warnings);
 
-	bool saveToXML(const FileName &filename);
-	wxArrayString getMissingMonsterNames() const;
+    bool saveToXML(const FileName &filename);
+    wxArrayString getMissingMonsterNames() const;
 };
 
 class MonsterType {

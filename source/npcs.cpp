@@ -251,51 +251,50 @@ wxArrayString NpcDatabase::getMissingNpcNames() const {
 	return missingNpcs;
 }
 
-bool NpcDatabase::loadFromLuaDir(const wxString &directory, wxString &error, wxArrayString &warnings) {
-	if (directory.IsEmpty() || !wxDir::Exists(directory)) {
-		return true;
+
+bool NpcDatabase::loadFromXmlFile(const FileName &filename, wxString &error, wxArrayString &warnings) {
+	pugi::xml_document doc;
+	pugi::xml_parse_result result = doc.load_file(filename.GetFullPath().mb_str());
+	if (!result) {
+		error = "Couldn't open file '" + filename.GetFullName() + "', invalid format?";
+		return false;
 	}
 
-	wxArrayString luaFiles;
-	wxDir::GetAllFiles(directory, &luaFiles, "*.lua", wxDIR_FILES | wxDIR_DIRS | wxDIR_HIDDEN);
+	pugi::xml_node npcsNode = doc.child("npcs");
+	if (!npcsNode) {
+		error = "This is not a valid npcs.xml file.";
+		return false;
+	}
 
-	for (const auto &filePath : luaFiles) {
-		std::string content = LuaParser::readFileContent(filePath.ToStdString());
-		if (content.empty()) {
-			warnings.push_back("Could not open: " + filePath);
+	for (pugi::xml_node npcNode = npcsNode.child("npc"); npcNode; npcNode = npcNode.next_sibling("npc")) {
+		pugi::xml_attribute nameAttr = npcNode.attribute("name");
+		if (!nameAttr) {
+			warnings.push_back("NPC entry missing 'name' attribute.");
 			continue;
 		}
-
-		std::string name = LuaParser::parseCreateCall(content, "Game.createNpcType");
-		if (name.empty()) {
-			name = LuaParser::parseLocalString(content, "internalNpcName");
-		}
-		if (name.empty()) {
-			continue;
-		}
+		std::string name = nameAttr.as_string();
+		Outfit outfit;
+		outfit.name = name;
+		outfit.lookType = npcNode.attribute("looktype").as_int(0);
+		outfit.lookItem = npcNode.attribute("lookitem").as_int(0);
+		outfit.lookAddon = npcNode.attribute("lookaddon").as_int(0);
+		outfit.lookHead = npcNode.attribute("lookhead").as_int(0);
+		outfit.lookBody = npcNode.attribute("lookbody").as_int(0);
+		outfit.lookLegs = npcNode.attribute("looklegs").as_int(0);
+		outfit.lookFeet = npcNode.attribute("lookfeet").as_int(0);
 
 		NpcType* existing = (*this)[name];
 		if (existing) {
-			if (!existing->missing) {
-				continue;
-			}
-			if (LuaParser::parseOutfit(content, existing->outfit)) {
-				existing->missing = false;
-			}
-			continue;
+			existing->outfit = outfit;
+			existing->missing = false;
+		} else {
+			NpcType* npcType = newd NpcType();
+			npcType->name = name;
+			npcType->outfit = outfit;
+			npcType->missing = false;
+			npcType->standard = false;
+			npcMap[as_lower_str(name)] = npcType;
 		}
-
-		NpcType* npcType = newd NpcType();
-		npcType->name = name;
-		npcType->outfit.name = name;
-		npcType->standard = false;
-
-		if (!LuaParser::parseOutfit(content, npcType->outfit)) {
-			delete npcType;
-			continue;
-		}
-
-		npcMap[as_lower_str(npcType->name)] = npcType;
 	}
 	return true;
 }
